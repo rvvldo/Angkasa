@@ -1,17 +1,17 @@
 // src/components/AuthProvider.tsx
 import { createContext, useContext, useEffect, useState, useRef, type ReactNode } from 'react';
-import { onAuthStateChanged } from 'firebase/auth';
-import type { User as FirebaseUser } from 'firebase/auth';
-import { auth } from '../firebase';
+import { onAuthStateChanged, type User as FirebaseUser } from 'firebase/auth';
+import { doc, getDoc, setDoc } from 'firebase/firestore'; // ✅ tambahkan ini
+import { auth, db } from '../firebase'; // ✅ pastikan `db` ada
 import { authService } from '../auth';
 
-// 🔊 Tambahkan tipe user yang sesuai dengan Firebase
+// 🔹 Tipe user: `id` = Firebase UID (unik & aman)
 type User = {
-  id: string;
+  id: string;               // ← ini adalah uid Firebase
   name: string;
   email: string;
   emailVerified: boolean;
-  bio?: string;
+  bio?: string;             // opsional
 };
 
 type AuthContextType = {
@@ -37,11 +37,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // 🔊 Audio
+  // 🔊 Audio (tetap dipertahankan)
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
 
-  // 🔊 Inisialisasi audio
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const audio = new Audio('/soundtrack.mp3');
@@ -71,19 +70,61 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAudioPlaying ? pauseAudio() : playAudio();
   };
 
-  // 🔑 Sinkronisasi dengan Firebase Auth
+  // 🔑 Sinkronisasi dengan Firebase Auth + Firestore
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        const userData: User = {
-          id: firebaseUser.uid,
-          name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
-          email: firebaseUser.email || '',
-          emailVerified: firebaseUser.emailVerified,
-        };
-        setUser(userData);
-        setIsEmailVerified(firebaseUser.emailVerified);
-        playAudio(); // 🔊 play saat login berhasil
+        try {
+          // ✅ Ambil data dari Firestore berdasarkan uid
+          const userDocRef = doc(db, 'users', firebaseUser.uid);
+          const userDoc = await getDoc(userDocRef);
+
+          let userData: User;
+
+          if (userDoc.exists()) {
+            const data = userDoc.data();
+            userData = {
+              id: firebaseUser.uid,
+              name: data.name || firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
+              email: data.email || firebaseUser.email || '',
+              emailVerified: firebaseUser.emailVerified,
+              bio: data.bio || undefined,
+            };
+          } else {
+            // ✅ Buat profil default di Firestore jika belum ada
+            const defaultName = firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User';
+            const defaultEmail = firebaseUser.email || '';
+
+            await setDoc(userDocRef, {
+              name: defaultName,
+              email: defaultEmail,
+              bio: '',
+              createdAt: new Date().toISOString(),
+            });
+
+            userData = {
+              id: firebaseUser.uid,
+              name: defaultName,
+              email: defaultEmail,
+              emailVerified: firebaseUser.emailVerified,
+              bio: undefined,
+            };
+          }
+
+          setUser(userData);
+          setIsEmailVerified(firebaseUser.emailVerified);
+          playAudio(); // 🔊 play saat login
+        } catch (error) {
+          console.error('Gagal memuat profil:', error);
+          // Fallback ke data minimal
+          setUser({
+            id: firebaseUser.uid,
+            name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
+            email: firebaseUser.email || '',
+            emailVerified: firebaseUser.emailVerified,
+            bio: undefined,
+          });
+        }
       } else {
         setUser(null);
         setIsEmailVerified(false);
@@ -91,10 +132,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       setLoading(false);
     });
+
     return unsubscribe;
   }, []);
 
-  // ✅ Firebase login
+  // ✅ Login
   const login = async (email: string, password: string) => {
     await authService.login(email, password);
   };
@@ -111,9 +153,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await authService.sendVerificationEmail();
   };
 
+  // ✅ Update profil (simpan ke Firestore)
   const updateProfile = async (updates: Partial<User>) => {
-    // Implementasi update profile via Firebase bisa ditambahkan nanti
-    console.log('Update profile:', updates);
+    if (!user) return;
+
+    const updatedData = { ...updates };
+    const userDocRef = doc(db, 'users', user.id);
+
+    await setDoc(userDocRef, updatedData, { merge: true });
+
+    // Perbarui state lokal
+    setUser((prev) => (prev ? { ...prev, ...updatedData } : null));
   };
 
   return (

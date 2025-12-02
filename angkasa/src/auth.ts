@@ -5,7 +5,8 @@ import {
   signOut,
   GoogleAuthProvider,
   signInWithPopup,
-  updateProfile as updateFirebaseProfile
+  updateProfile as updateFirebaseProfile,
+  sendEmailVerification
 } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { auth, db } from './firebase'; // 👈 pastikan `db` ada
@@ -23,6 +24,14 @@ export const authService = {
   logout: () => {
     return signOut(auth);
   },
+
+  sendVerificationEmail: () => {
+    if (!auth.currentUser) {
+      throw new Error('Tidak ada user yang login.');
+    }
+    return sendEmailVerification(auth.currentUser);
+  },
+
   register: async (email: string, password: string, displayName?: string) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;

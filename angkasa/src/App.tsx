@@ -12,8 +12,18 @@ import EmailDetail from './pages/EmailDetail';
 import Notifikasi from './pages/Notifikasi';
 import Register from './pages/Register';
 import Profil from './pages/Profil';
+import AIAgent from './components/AIAgent';
+import CentralDashboard from './pages/admin/CentralDashboard';
+import CentralUsers from './pages/admin/CentralUsers';
+import CentralReports from './pages/admin/CentralReports';
+import MaintenancePage from './pages/MaintenancePage';
+import { IS_MAINTENANCE_MODE } from './config/maintenance';
+
 
 function App() {
+    if (IS_MAINTENANCE_MODE) {
+    return <MaintenancePage />;
+  }
   return (
     <BrowserRouter>
       <AuthProvider> 
@@ -35,7 +45,7 @@ function App() {
 
         {/* Main layout */}
         <div className="relative z-10 flex flex-col min-h-screen">
-          <main className="flex-grow pt-16">
+          <main className="flex-grow">
             <Routes>
               {/* Public Routes */}
               // Di App.tsx
@@ -57,9 +67,15 @@ function App() {
                 {/* <Route path="/email/:id" element={<EmailDetail />} /> */}
                 <Route path="/email/accepted/:id" element={<EmailDetail />} />
                 <Route path="/notifications" element={<Notifikasi />} />
+
+                {/* Admin Routes */}
+                <Route path="/admin/central" element={<CentralDashboard />} />
+                <Route path="/admin/central/users" element={<CentralUsers />} />
+                <Route path="/admin/central/reports" element={<CentralReports />} />
               </Route>
             </Routes>
           </main>
+          <AIAgent />
         </div>
       </AuthProvider>
     </BrowserRouter>

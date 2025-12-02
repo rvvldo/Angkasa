@@ -1,7 +1,7 @@
 // src/pages/LoginPage.tsx
 import { useState, useEffect } from 'react';
-import { useAuth } from '../components/AuthProvider'; // pastikan pakai AuthProvider
-import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../components/AuthProvider';
+import { useNavigate, useLocation } from 'react-router-dom'; // ✅ tambahkan useLocation
 import Particles from '../components/Particles';
 import { Link } from 'react-router-dom';
 
@@ -10,15 +10,25 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login, loginWithGoogle, user } = useAuth(); // 👈 tambahkan `user`
+  const { login, loginWithGoogle, user, isEmailVerified, sendVerificationEmail } = useAuth(); // ✅ tambahkan isEmailVerified & sendVerificationEmail
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // 🔁 Redirect ke /forum jika user sudah login
+  // 🔁 Redirect ke /forum jika sudah login
   useEffect(() => {
     if (user) {
       navigate('/forum');
     }
   }, [user, navigate]);
+
+  // ✅ Tampilkan pesan sukses dari register
+  useEffect(() => {
+    if (location.state?.message) {
+      setError(location.state.message);
+      // Opsional: hilangkan dari history setelah ditampilkan
+      navigate('.', { replace: true });
+    }
+  }, [location, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,9 +37,15 @@ export default function LoginPage() {
 
     try {
       await login(email, password);
-      // ❌ JANGAN redirect di sini → biarkan useEffect yang handle
+      // Biarkan useEffect redirect ke /forum
     } catch (err: any) {
-      setError(err.message || 'Terjadi kesalahan');
+      let message = 'Terjadi kesalahan saat login.';
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+        message = 'Email atau password salah.';
+      } else if (err.code === 'auth/too-many-requests') {
+        message = 'Terlalu banyak percobaan gagal. Coba lagi nanti.';
+      }
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -41,16 +57,29 @@ export default function LoginPage() {
     try {
       await loginWithGoogle();
     } catch (err: any) {
-      setError(err.message || 'Gagal login dengan Google');
+      setError('Gagal login dengan Google. Coba lagi.');
     } finally {
       setLoading(false);
     }
   };
 
-  // Opsional: hindari render form jika sedang loading auth
+  const handleSendVerification = async () => {
+    try {
+      await sendVerificationEmail();
+      setError('Email verifikasi telah dikirim. Periksa kotak masuk Anda.');
+    } catch (err) {
+      setError('Gagal mengirim email verifikasi.');
+    }
+  };
+
   if (loading) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        Loading...
+      </div>
+    );
   }
+
   return (
     <div className="relative min-h-screen bg-transparent overflow-hidden">
       <div className="absolute inset-0 z-0 pointer-events-none">
@@ -69,14 +98,28 @@ export default function LoginPage() {
 
       <div className="relative z-10 flex items-center justify-center min-h-screen p-4">
         <div className="w-full max-w-md bg-white/80 backdrop-blur-sm rounded-xl shadow-xl overflow-hidden p-8 border border-white/20">
-          <div className="text-center mb-8">
+          <div className="text-center mb-6">
             <h2 className="text-3xl font-bold text-gray-800">Login</h2>
             <p className="text-gray-600 mt-2">Masuk ke akun Anda</p>
           </div>
 
+          {/* ✅ Tampilkan pesan (sukses/error) */}
           {error && (
-            <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md text-sm">
+            <div className="mb-4 p-3 rounded-md text-sm text-red-700 bg-red-50 border border-red-200">
               {error}
+            </div>
+          )}
+
+          {/* ✅ Info: email belum diverifikasi */}
+          {!isEmailVerified && user?.email && (
+            <div className="mb-4 p-3 rounded-md text-sm text-amber-700 bg-amber-50 border border-amber-200">
+              Email belum diverifikasi.{' '}
+              <button
+                onClick={handleSendVerification}
+                className="text-amber-600 hover:underline font-medium"
+              >
+                Kirim ulang verifikasi
+              </button>
             </div>
           )}
 
