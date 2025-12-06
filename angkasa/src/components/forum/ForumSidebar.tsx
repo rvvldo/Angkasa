@@ -17,7 +17,7 @@ export default function ForumSidebar({ activeView, setActiveView }: ForumSidebar
     return (
         <>
             {/* Desktop Sidebar - Left side, vertical */}
-            <div className="hidden lg:block w-64 flex-shrink-0 space-y-4">
+            <div className="hidden lg:block w-[14vw] flex-shrink-0 space-y-4">
                 <div className="bg-slate-800/30 backdrop-blur-md rounded-xl border border-slate-600/30 p-4 sticky top-24">
                     <h2 className="text-slate-200 font-semibold mb-4 px-2">Navigasi Menu</h2>
                     <nav className="space-y-2">

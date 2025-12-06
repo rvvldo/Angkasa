@@ -33,8 +33,9 @@ export default function ForumRightSidebar({ onSearch, onSearchClick }: ForumRigh
 
     return (
         <div className="hidden lg:block w-80 flex-shrink-0 space-y-6">
+            <div className='sticky top-24 ' >
             {/* Popular Searches */}
-            <div className="bg-slate-800/30 backdrop-blur-md rounded-xl border border-slate-600/30 p-5 sticky top-24">
+            <div className="bg-slate-800/30 backdrop-blur-md rounded-xl border border-slate-600/30 p-5 ">
                 <div className="flex items-center gap-2 mb-4">
                     <TrendingUp className="w-5 h-5 text-blue-400" />
                     <h2 className="text-slate-200 font-semibold">Pencarian Populer</h2>
@@ -53,7 +54,7 @@ export default function ForumRightSidebar({ onSearch, onSearchClick }: ForumRigh
             </div>
 
             {/* People You May Know */}
-            <div className="bg-slate-800/30 backdrop-blur-md rounded-xl border border-slate-600/30 p-5 lg:sticky lg:top-[280px]">
+            <div className="bg-slate-800/30 backdrop-blur-md rounded-xl border border-slate-600/30 p-5 mt-4">
                 <div className="flex items-center gap-2 mb-4">
                     <UserPlus className="w-5 h-5 text-green-400" />
                     <h2 className="text-slate-200 font-semibold">Orang Mungkin Anda Kenal</h2>
@@ -82,6 +83,7 @@ export default function ForumRightSidebar({ onSearch, onSearchClick }: ForumRigh
                 <button className="w-full mt-4 py-2 text-sm text-blue-400 hover:text-blue-300 transition-colors">
                     Lihat Lainnya
                 </button>
+            </div>
             </div>
         </div>
     );

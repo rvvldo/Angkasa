@@ -303,7 +303,7 @@ export default function ForumFeed({
     if (!user) return null;
 
     return (
-        <div className="w-full max-w-4xl mx-auto">
+        <div className="w-full max-w-4xl mx-auto mb-4">
             {/* 🔍 Search Toggle */}
             <section className="mb-6" ref={searchRef}>
                 <div className="relative">

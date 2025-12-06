@@ -19,7 +19,7 @@ export const AdminDash: React.FC = () => {
       case 'notifications':
         return <AdminNotif />;
       default:
-        return <AdminPanel userId={userId} />;
+        return <AdminPanel userId={userId} onNavigate={(r) => setCurrentRoute(r)} />;
     }
   };
 

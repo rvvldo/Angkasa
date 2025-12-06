@@ -27,7 +27,7 @@ const AdminNotif: React.FC = () => {
 
   return (
     <div className="max-w-xl mx-auto space-y-6">
-      <h1 className="text-3xl font-extrabold text-white-300 border-b border-slate-700 pb-3">
+      <h1 className="md:text-3xl font-extrabold text-white border-b border-slate-700 pb-3">
         Kirim Notifikasi ke Peserta
       </h1>
       <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-xl">
@@ -47,7 +47,7 @@ const AdminNotif: React.FC = () => {
             <button
               type="submit"
               disabled={isSending || !title || !message}
-              className={`px-6 py-2 flex items-center justify-center font-bold rounded-lg transition ${
+              className={`px-4 py-2 flex items-center justify-center font-bold rounded-lg transition ${
                 isSending
                   ? 'bg-gray-600 cursor-not-allowed'
                   : 'bg-blue-700 text-white hover:bg-blue-500 shadow-md shadow-blue-800/50'
@@ -55,13 +55,13 @@ const AdminNotif: React.FC = () => {
             >
               {isSending ? (
                 <>
-                  <Clock size={18} className="animate-spin mr-2" />
-                  Mengirim...
+                  <Clock size={18} className="animate-spin" />
+                  <span className="hidden md:inline ml-2">Mengirim...</span>
                 </>
               ) : (
                 <>
-                  <Send size={18} className="mr-2" />
-                  Kirim Notifikasi
+                  <Send size={18} />
+                  <span className="hidden md:inline ml-2">Kirim Notifikasi</span>
                 </>
               )}
             </button>

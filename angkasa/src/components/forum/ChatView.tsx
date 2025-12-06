@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, MoreVertical, Send, Paperclip, Smile, Phone, Video } from 'lucide-react';
+import { Search, MoreVertical, Send, Paperclip, Smile, Phone, Video, ArrowLeft } from 'lucide-react';
 
 interface Contact {
     id: string;
@@ -21,7 +21,7 @@ export default function ChatView() {
     const [message, setMessage] = useState('');
 
     return (
-        <div className="flex h-[calc(100vh-140px)] bg-slate-800/30 border border-slate-600/30 rounded-xl overflow-hidden">
+        <div className="flex h-[calc(100vh-120px)] max-md:h-[calc(100vh-180px)] bg-slate-800/30 border border-slate-600/30 rounded-xl overflow-hidden">
             {/* Sidebar List */}
             <div className={`${selectedContact ? 'hidden md:flex' : 'flex'} w-full md:w-80 flex-col border-r border-slate-600/30`}>
                 <div className="p-4 border-b border-slate-600/30">
@@ -77,7 +77,7 @@ export default function ChatView() {
                                 onClick={() => setSelectedContact(null)}
                                 className="md:hidden p-2 -ml-2 text-slate-400 hover:text-white"
                             >
-                                ←
+                                <ArrowLeft/>
                             </button>
                             <div className="w-10 h-10 rounded-full bg-slate-600 flex items-center justify-center">
                                 <span className="font-bold text-slate-300">{selectedContact.name.charAt(0)}</span>

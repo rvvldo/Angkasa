@@ -45,7 +45,7 @@ export default function ForumPage() {
   };
 
   return (
-    <div className="min-h-screen pt-20 pb-20">
+    <div className="min-h-screen pt-20 max-md:pt-14 pb-10 max-md:pb-20">
       <DashboardHeader />
 
       {/* 🔊 Tombol Kontrol Musik — Pojok Kiri Bawah */}
@@ -66,12 +66,12 @@ export default function ForumPage() {
       </div>
 
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-[1600px]">
-        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+        <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
           {/* Left Sidebar */}
           <ForumSidebar activeView={activeView} setActiveView={setActiveView} />
 
           {/* Right Sidebar - appears second on mobile, third on desktop */}
-          <div className="order-2 lg:order-3">
+          <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 order-3">
             <ForumRightSidebar
               onSearch={handlePopularSearchClick}
               onSearchClick={() => setTriggerSearchOpen(true)}
@@ -79,7 +79,7 @@ export default function ForumPage() {
           </div>
 
           {/* Main Content - appears third on mobile, second on desktop */}
-          <div className="flex-1 min-w-0 order-3 lg:order-2">
+          <div className="flex-1 min-w-0 order-2 ">
             {renderContent()}
           </div>
         </div>

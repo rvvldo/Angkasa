@@ -63,7 +63,7 @@ export default function EventView() {
     });
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 mb-4">
             {/* Header & Search */}
             <div className="bg-slate-800/30 border border-slate-600/30 rounded-xl p-6">
                 <h2 className="text-2xl font-bold text-slate-200 mb-6">Acara & Seminar</h2>

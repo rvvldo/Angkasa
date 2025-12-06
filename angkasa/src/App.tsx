@@ -88,10 +88,10 @@ function App() {
                   }
                 />
                 <Route
-                  path="/adminbwh/AdminDash"
+                  path="/DashAdmin/AdminDash"
                   element={
                     <>
-                      {console.log('Rendering DashAdminApp for /adminbwh/AdminDash')}
+                      {console.log('Rendering DashAdminApp for /DashaAdmin/AdminDash')}
                       <DashAdminApp />
                     </>
                   }

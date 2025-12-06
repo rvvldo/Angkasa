@@ -3,7 +3,7 @@ import { Plus, Trash2, Edit, Calendar, LinkIcon, Image, BookOpen, Clock, MoreVer
 import type { Post } from './AdminCommon';
 import { generateId, STORAGE_KEY, InputField, Modal } from './AdminCommon';
 
-// --- Component: Post Form (Diperbaiki Validasi) ---
+// Component: Post Form
 const PostForm: React.FC<{
   onClose: () => void;
   postToEdit?: Post | null;
@@ -25,13 +25,11 @@ const PostForm: React.FC<{
     e.preventDefault();
     setError(null);
 
-    // ✅ PERBAIKAN: Tanggal Penutupan TIDAK BOLEH SEBELUM Tanggal Acara
     if (new Date(closingDate) < new Date(eventDate)) {
       setError('Tanggal Penutupan Pendaftaran tidak boleh sebelum Tanggal Acara.');
       return;
     }
 
-    // ✅ Validasi URL Gambar (opsional tapi disarankan)
     if (imageUrl.trim() && !/^https?:\/\//.test(imageUrl.trim())) {
       setError('URL Gambar harus diawali dengan https://');
       return;
@@ -119,7 +117,7 @@ const PostForm: React.FC<{
   );
 };
 
-// --- NEW: Full-Width Bottom Modal for Mobile Detail ---
+// Full-Width Bottom Modal for Mobile Detail
 const PostDetailBottomModal: React.FC<{
   post: Post;
   onClose: () => void;
@@ -155,7 +153,7 @@ const PostDetailBottomModal: React.FC<{
           <X size={20} />
         </button>
 
-        {/* Image - DIPERBAIKI */}
+        {/* Image */}
         <div className="mb-4">
           <img
             src={post.imageUrl}
@@ -218,7 +216,7 @@ const PostDetailBottomModal: React.FC<{
   );
 };
 
-// --- Component: Post Card (Updated: Remove internal modal) ---
+// Component: Post Card
 const PostCard: React.FC<{
   post: Post;
   onMoreClick: (post: Post) => void;
@@ -231,13 +229,13 @@ const PostCard: React.FC<{
 
   return (
     <>
-      {/* --- Mobile View (Tokopedia Style) --- */}
-      <div className="sm:hidden bg-gray-800 border border-slate-700 rounded-xl p-2 flex flex-col space-y-2 hover:bg-gray-750 transition duration-200 relative">
+      {/* Mobile View */}
+      <div className="sm:hidden bg-gray-800 border border-slate-700 rounded-xl p-1 flex flex-col space-y-2 hover:bg-gray-750 transition duration-200 relative">
         <div className="w-full flex-shrink-0">
           <img
             src={post.imageUrl}
             alt={`Gambar untuk ${post.title}`}
-            className="w-[90%] mx-auto h-20 object-cover rounded-lg border border-gray-700"
+            className="mx-auto h-20 object-cover rounded-lg border border-gray-700"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               target.onerror = null;
@@ -261,7 +259,7 @@ const PostCard: React.FC<{
         </button>
       </div>
 
-      {/* --- Desktop View --- */}
+      {/*  Desktop View */}
       <div className="hidden sm:block bg-gray-800 border border-slate-700 rounded-xl p-4 flex flex-col space-y-3 hover:shadow-lg hover:shadow-blue-900/30 transition duration-300 h-full relative">
         <div className="w-full flex-shrink-0">
           <img
@@ -317,7 +315,7 @@ const PostCard: React.FC<{
   );
 };
 
-// --- Component: AdminPost (Diperbarui) ---
+// Component: AdminPost
 const AdminPost: React.FC = () => {
   const [posts, setPosts] = useState<Post[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -382,7 +380,7 @@ const AdminPost: React.FC = () => {
 
   return (
     <div className="space-y-6 relative min-h-screen pb-24">
-      <h1 className="text-3xl font-extrabold text-white border-b border-slate-700 pb-3">
+      <h1 className="md:text-3xl font-extrabold text-white border-b border-slate-700 pb-3">
         Daftar Postingan ({posts.length})
       </h1>
 
@@ -399,7 +397,7 @@ const AdminPost: React.FC = () => {
           <p className="text-sm text-gray-500 mt-4">Klik untuk membuat Postingan pertama Anda</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 px-4">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 px-2">
           {posts.map((post) => (
             <div key={post.id} className="col-span-1">
               <PostCard
@@ -414,15 +412,27 @@ const AdminPost: React.FC = () => {
       )}
 
       {/* Floating Button */}
-      <div className="fixed bottom-6 right-6 z-10">
-        <button
-          onClick={handleAddClick}
-          className="p-3 bg-blue-600 rounded-full text-white shadow-lg hover:bg-blue-500 transition transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-blue-400"
-          aria-label="Tambah Postingan"
-        >
-          <Plus size={24} />
-        </button>
-      </div>
+      {/* Tombol Plus - Mobile */}
+        <div className="fixed sm:hidden bottom-5 right-4 z-10">
+          <button
+            onClick={handleAddClick}
+            className="p-3 bg-blue-600 rounded-full text-white shadow-xl hover:bg-blue-500 transition transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-blue-400"
+            aria-label="Tambah Postingan"
+          >
+            <Plus size={24} />
+          </button>
+        </div>
+
+        {/* Tombol Plus - Desktop */}
+        <div className="fixed hidden sm:block bottom-6 right-6 z-10">
+          <button
+            onClick={handleAddClick}
+            className="p-4 bg-blue-600 rounded-full text-white shadow-lg hover:bg-blue-500 transition transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-blue-400"
+            aria-label="Tambah Postingan"
+          >
+            <Plus size={24} />
+          </button>
+        </div>
 
       {/* Modal Tambah/Edit */}
       <Modal
