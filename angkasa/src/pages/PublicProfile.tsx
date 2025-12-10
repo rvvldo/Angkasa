@@ -2,7 +2,18 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { db } from "../firebase";
-import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { useAuth } from "../components/AuthProvider"; 
+import {
+  doc,
+  getDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+  setDoc,
+  updateDoc,
+  arrayUnion,
+} from "firebase/firestore";
 import {
   FileText,
   CheckCircle,
@@ -55,12 +66,16 @@ interface User {
 export default function PublicProfile() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user: currentUser } = useAuth();
 
   const [user, setUser] = useState<User | null>(null);
   const [productions, setProductions] = useState<Certificate[]>([]);
   const [koleksi, setkoleksi] = useState<Certificate[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCertificate, setSelectedCertificate] = useState<Certificate | null>(null);
+  const [isFriend, setIsFriend] = useState(false); // ✅
+  const [loadingFriend, setLoadingFriend] = useState(true); // ✅
+
 
   useEffect(() => {
     if (!id) {
@@ -106,6 +121,53 @@ export default function PublicProfile() {
     loadProfile();
   }, [id, navigate]);
 
+  useEffect(() => {
+    if (!currentUser || !user) {
+      setIsFriend(false);
+      setLoadingFriend(false);
+      return;
+    }
+
+    const checkFriendship = async () => {
+      try {
+        const friendDoc = await getDoc(doc(db, "friends", currentUser.id));
+        if (friendDoc.exists()) {
+          const data = friendDoc.data();
+          setIsFriend(Array.isArray(data.friends) && data.friends.includes(user.id));
+        } else {
+          setIsFriend(false);
+        }
+      } catch (err) {
+        console.error("Gagal cek pertemanan:", err);
+        setIsFriend(false);
+      } finally {
+        setLoadingFriend(false);
+      }
+    };
+
+    checkFriendship();
+  }, [currentUser, user]);
+
+    // ✅ Fungsi tambah teman
+  const addFriend = async () => {
+    if (!currentUser || !user) return;
+
+    try {
+      await setDoc(
+        doc(db, "friends", currentUser.id),
+        {
+          friends: arrayUnion(user.id),
+        },
+        { merge: true }
+      );
+      setIsFriend(true);
+    } catch (err) {
+      console.error("Gagal menambah teman:", err);
+      alert("Gagal menambah teman. Coba lagi.");
+    }
+  };
+  
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white">
@@ -135,7 +197,7 @@ export default function PublicProfile() {
   const display = (value: string | null | undefined) => value || "–";
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-200 pb-20">
+    <div className="min-h-screen text-slate-200 pb-20">
       <div className="container mx-auto px-4 sm:px-6 pt-8 max-w-6xl">
         {/* Header Profil */}
         <div className="mb-10">
@@ -146,7 +208,7 @@ export default function PublicProfile() {
         {/* Main Profile Card */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {/* Left Column: Avatar & Name */}
-          <div className="bg-gradient-to-br from-slate-800 to-slate-700 rounded-xl p-6 border border-slate-600 shadow-lg">
+          <div className="bg-slate-800/30 border border-slate-600/30 rounded-xl p-6 border shadow-lg">
             <div className="flex flex-col items-center">
               <div className="w-40 h-40 rounded-full bg-slate-700 flex items-center justify-center border-4 border-slate-500 mb-4 shadow-inner">
                 <span className="text-6xl font-bold text-white">
@@ -155,11 +217,33 @@ export default function PublicProfile() {
               </div>
               <h2 className="text-3xl font-bold mt-2">{name}</h2>
               <p className="text-green-400 text-sm mt-1">Premium User</p>
+                            {/* ✅ Tombol Add Friend */}
+              {currentUser && currentUser.id !== user.id && (
+                <div className="mt-6 w-full">
+                  {loadingFriend ? (
+                    <button className="w-full py-2 px-4 bg-slate-600 text-white rounded-lg cursor-not-allowed">
+                      Loading...
+                    </button>
+                  ) : isFriend ? (
+                    <button className="w-full py-2 px-4 bg-green-600 text-white rounded-lg cursor-default">
+                      Anda sudah berteman
+                    </button>
+                  ) : (
+                    <button
+                      onClick={addFriend}
+                      className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                    >
+                      Tambah Teman
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
+
           {/* Right Column: Bio & Details */}
-          <div className="lg:col-span-2 bg-slate-800 rounded-xl p-6 border border-slate-700 shadow-md">
+          <div className="lg:col-span-2 bg-slate-800/30 border border-slate-600/30 rounded-xl p-6 border shadow-md">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">Bio & other details</h3>
               <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
@@ -241,7 +325,7 @@ export default function PublicProfile() {
         </div>
 
         {/* Social Media */}
-        <div className="bg-slate-800 rounded-xl p-6 border border-slate-700 mb-8 shadow-md">
+        <div className=" rounded-xl p-6 border bg-slate-800/30 border border-slate-600/30 mb-8 shadow-md">
           <h3 className="text-lg font-semibold mb-4">Social Media</h3>
           <div className="flex gap-4">
             {social_media.instagram && (
@@ -280,7 +364,7 @@ export default function PublicProfile() {
           </div>
         </div>
         {/* My Collection */}
-        <div className="bg-slate-800 rounded-xl p-6 border border-slate-700 shadow-md">
+        <div className="rounded-xl p-6 border bg-slate-800/30 border border-slate-600/30 shadow-md">
           <h3 className="text-lg font-semibold mb-4">My Collection</h3>
           {collection.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">

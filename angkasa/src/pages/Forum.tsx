@@ -45,7 +45,7 @@ export default function ForumPage() {
   };
 
   return (
-    <div className="min-h-screen pt-20 max-md:pt-14 pb-10 max-md:pb-20">
+    <div className="min-h-screen pt-30 max-md:pt-14 pb-10 max-md:pb-20">
       <DashboardHeader />
 
       {/* 🔊 Tombol Kontrol Musik — Pojok Kiri Bawah */}

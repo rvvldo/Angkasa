@@ -10,7 +10,6 @@ export default function ForumSidebar({ activeView, setActiveView }: ForumSidebar
         { id: 'feed', label: 'Beranda', icon: Home },
         { id: 'community', label: 'Komunitas', icon: Users },
         { id: 'group', label: 'Grup', icon: MessageSquare },
-        { id: 'chat', label: 'Chat', icon: MessageCircle },
         { id: 'event', label: 'Acara', icon: Calendar },
     ];
 

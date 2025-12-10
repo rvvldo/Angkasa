@@ -82,7 +82,7 @@ function App() {
                   path="/DashAdmin"
                   element={
                     <>
-                      {console.log('Rendering DashAdminApp for /adminbwh')}
+                      {console.log('Rendering DashAdminApp for /DashAdmin')}
                       <DashAdminApp />
                     </>
                   }

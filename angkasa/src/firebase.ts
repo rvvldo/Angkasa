@@ -2,17 +2,20 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+import { getDatabase } from 'firebase/database';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAF4veeyofGsuM9rRYA4MbMwksw1bVyzBM",
-  authDomain: "project-sekolah-2ad32.firebaseapp.com",
-  projectId: "project-sekolah-2ad32",
-  storageBucket: "project-sekolah-2ad32.firebasestorage.app",
-  messagingSenderId: "238726950843",
-  appId: "1:238726950843:web:dcc46562e4aa756f535e9e",
-  measurementId: "G-2WHX7LPDN4"
+  apiKey: "AIzaSyCW-Bvts7fdQovoXdIIXsMnDgU8sTURN6s",
+  authDomain: "lascode-2fc55.firebaseapp.com",
+  databaseURL: "https://lascode-2fc55-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "lascode-2fc55",
+  storageBucket: "lascode-2fc55.firebasestorage.app",
+  messagingSenderId: "33461351636",
+  appId: "1:33461351636:web:306acd0c5a9cf042fdb741",
+  measurementId: "G-YRGG71NLLN"
 };
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+export const rtdb = getDatabase(app);

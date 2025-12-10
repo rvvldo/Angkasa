@@ -246,7 +246,7 @@ export default function Profile() {
         {/* Main Profile Card */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {/* Left Column: Avatar & Name */}
-          <div className="bg-gradient-to-br from-slate-800 to-slate-700 rounded-xl p-6 border border-slate-600 shadow-lg">
+          <div className=" rounded-xl p-6 border bg-slate-800/30 border border-slate-600/30 shadow-lg">
             <div className="flex flex-col items-center">
               <div className="w-40 h-40 rounded-full bg-slate-700 flex items-center justify-center border-4 border-slate-500 mb-4 shadow-inner">
                 <span className="text-6xl font-bold text-white">
@@ -261,7 +261,7 @@ export default function Profile() {
           </div>
 
           {/* Right Column: Editable Bio & Details */}
-          <div className="lg:col-span-2 bg-slate-800 rounded-xl p-6 border border-slate-700 shadow-md">
+          <div className="lg:col-span-2  rounded-xl p-6 border bg-slate-800/30 border border-slate-600/30 shadow-md">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">Bio & Detail Profil</h3>
             </div>
@@ -377,7 +377,7 @@ export default function Profile() {
         </div>
 
         {/* Social Media */}
-        <div className="bg-slate-800 rounded-xl p-6 border border-slate-700 mb-8 shadow-md">
+        <div className=" rounded-xl p-6 border bg-slate-800/30 border border-slate-600/30 mb-8 shadow-md">
           <h3 className="text-lg font-semibold mb-4">Social Media (opsional)</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <input
@@ -402,7 +402,7 @@ export default function Profile() {
         </div>
 
         {/* My Productions */}
-        <div className="bg-slate-800 rounded-xl p-6 border border-slate-700 mb-8 shadow-md">
+        <div className="rounded-xl p-6 border bg-slate-800/30 border border-slate-600/30 mb-8 shadow-md">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold">Portofolio Saya</h3>
             <span className="text-xs text-slate-400">Klik item untuk lihat</span>
@@ -432,7 +432,7 @@ export default function Profile() {
         </div>
 
         {/* Tambah Sertifikat */}
-        <div className="bg-slate-800 rounded-xl p-6 border border-slate-700 mb-8 shadow-md">
+        <div className=" rounded-xl p-6 border bg-slate-800/30 border border-slate-600/30 mb-8 shadow-md">
           <h3 className="text-lg font-semibold mb-4">Tambah Portofolio</h3>
           <div className="space-y-3">
             <input
@@ -469,7 +469,7 @@ export default function Profile() {
         </div>
 
         {/* Pencapaian */}
-        <div className="bg-slate-800 rounded-xl p-6 border border-slate-700 mb-8 shadow-md">
+        <div className=" rounded-xl p-6 border bg-slate-800/30 border border-slate-600/30 mb-8 shadow-md">
           <h3 className="text-lg font-semibold mb-4">Pencapaian</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {achievements.slice(0, 4).map((ach) => {
@@ -496,7 +496,7 @@ export default function Profile() {
         </div>
 
         {/* Menu Bawah */}
-        <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 shadow-md">
+        <div className=" rounded-xl p-4 border bg-slate-800/30 border border-slate-600/30 shadow-md">
           <p className="text-sm font-semibold text-slate-300 mb-3">Akun</p>
           <div className="space-y-2">
             <button className="flex items-center gap-3 w-full text-left px-3 py-2 text-slate-300 hover:text-white hover:bg-slate-700/40 rounded">

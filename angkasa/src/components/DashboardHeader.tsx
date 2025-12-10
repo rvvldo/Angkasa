@@ -2,12 +2,12 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthProvider";
 import { useEffect, useState } from "react";
-import { MessageSquare, Mail, Bell, LogOut, Search } from "lucide-react";
+import { Mail, Bell, Search, Home } from "lucide-react";
 import { searchUsers } from "../lib/userService";
 import NotificationSidebar from "./NotificationSidebar";
 
 export default function DashboardHeader() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -51,9 +51,6 @@ export default function DashboardHeader() {
     setShowSearch(false);
   };
 
-  const handleLogout = () => {
-    logout();
-  };
 
   if (!user) return null;
 
@@ -123,7 +120,7 @@ export default function DashboardHeader() {
             {/* Navigation Icons */}
             <div className="flex items-center gap-3">
               <Link to="/Forum" className="p-2 rounded-full hover:bg-white/10 text-slate-300 hover:text-white transition-colors" title="Forum">
-                <MessageSquare className="w-5 h-5" />
+                <Home className="w-5 h-5" />
               </Link>
               <Link to="/email" className="p-2 rounded-full hover:bg-white/10 text-slate-300 hover:text-white transition-colors" title="Email">
                 <Mail className="w-5 h-5" />

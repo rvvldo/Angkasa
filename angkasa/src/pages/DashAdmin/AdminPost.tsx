@@ -1,7 +1,21 @@
+// src/components/admin/AdminPost.tsx
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit, Calendar, LinkIcon, Image, BookOpen, Clock, MoreVertical, X } from 'lucide-react';
+import {
+  Plus,
+  Trash2,
+  Edit,
+  Calendar,
+  LinkIcon,
+  Image,
+  BookOpen,
+  Clock,
+  MoreVertical,
+  X,
+} from 'lucide-react';
 import type { Post } from './AdminCommon';
-import { generateId, STORAGE_KEY, InputField, Modal } from './AdminCommon';
+import { InputField, Modal } from './AdminCommon';
+import { ref, push, set, remove, onValue, update } from 'firebase/database';
+import { auth, rtdb } from '../../firebase';
 
 // Component: Post Form
 const PostForm: React.FC<{
@@ -136,15 +150,12 @@ const PostDetailBottomModal: React.FC<{
 
   return (
     <div className="fixed inset-0 z-50 flex justify-center items-end">
-      {/* Background Overlay */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       ></div>
 
-      {/* Modal Content - Slides from bottom */}
       <div className="relative w-full max-w-md bg-gray-800 border-t-4 border-slate-600 rounded-t-2xl p-4 transform transition-transform duration-300 ease-out translate-y-0">
-        {/* Close Button */}
         <button
           onClick={onClose}
           className="absolute top-3 right-3 text-gray-400 hover:text-white"
@@ -153,7 +164,6 @@ const PostDetailBottomModal: React.FC<{
           <X size={20} />
         </button>
 
-        {/* Image */}
         <div className="mb-4">
           <img
             src={post.imageUrl}
@@ -168,7 +178,6 @@ const PostDetailBottomModal: React.FC<{
           />
         </div>
 
-        {/* Content */}
         <h2 className="text-xl font-bold text-blue-400 mb-2">{post.title}</h2>
         <p className="text-gray-300 mb-4 whitespace-pre-line">{post.description}</p>
 
@@ -193,7 +202,6 @@ const PostDetailBottomModal: React.FC<{
           Buka Link Pendaftaran
         </a>
 
-        {/* Action Buttons */}
         <div className="flex space-x-2">
           <button
             onClick={() => {
@@ -229,7 +237,6 @@ const PostCard: React.FC<{
 
   return (
     <>
-      {/* Mobile View */}
       <div className="sm:hidden bg-gray-800 border border-slate-700 rounded-xl p-1 flex flex-col space-y-2 hover:bg-gray-750 transition duration-200 relative">
         <div className="w-full flex-shrink-0">
           <img
@@ -259,7 +266,6 @@ const PostCard: React.FC<{
         </button>
       </div>
 
-      {/*  Desktop View */}
       <div className="hidden sm:block bg-gray-800 border border-slate-700 rounded-xl p-4 flex flex-col space-y-3 hover:shadow-lg hover:shadow-blue-900/30 transition duration-300 h-full relative">
         <div className="w-full flex-shrink-0">
           <img
@@ -315,49 +321,90 @@ const PostCard: React.FC<{
   );
 };
 
-// Component: AdminPost
+// Component: AdminPost — Versi Multi-Admin
 const AdminPost: React.FC = () => {
-  const [posts, setPosts] = useState<Post[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    return saved
-      ? JSON.parse(saved).map((p: any) => ({
-          ...p,
-          eventDate: new Date(p.eventDate),
-          closingDate: new Date(p.closingDate),
-          createdAt: new Date(p.createdAt),
-        }))
-      : [];
-  });
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [postToEdit, setPostToEdit] = useState<Post | null>(null);
   const [selectedPostForDetail, setSelectedPostForDetail] = useState<Post | null>(null);
 
+  // 🔥 Ambil data hanya milik admin yang sedang login
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
-  }, [posts]);
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      setLoading(false);
+      return;
+    }
 
-  const handleAddPost = (data: Omit<Post, 'id' | 'createdAt'>) => {
-    const newPost: Post = {
-      ...data,
-      id: generateId(),
-      createdAt: new Date(),
-    };
-    setPosts((prev) => [newPost, ...prev]);
+    const postsRef = ref(rtdb, `admins/${currentUser.uid}/posts`);
+    const unsubscribe = onValue(postsRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        const postsArray: Post[] = Object.keys(data).map((key) => ({
+          id: key,
+          ...data[key],
+          eventDate: new Date(data[key].eventDate),
+          closingDate: new Date(data[key].closingDate),
+          createdAt: new Date(data[key].createdAt),
+        }));
+        postsArray.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        setPosts(postsArray);
+      } else {
+        setPosts([]);
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // 🔥 Tambah Postingan ke folder admin
+  const handleAddPost = async (data: Omit<Post, 'id' | 'createdAt'>) => {
+    const currentUser = auth.currentUser;
+    if (!currentUser) return;
+
+    try {
+      const postsRef = ref(rtdb, `admins/${currentUser.uid}/posts`);
+      const newPostRef = push(postsRef);
+      await set(newPostRef, {
+        ...data,
+        createdAt: new Date().toISOString(),
+        eventDate: data.eventDate.toISOString(),
+        closingDate: data.closingDate.toISOString(),
+      });
+    } catch (error) {
+      console.error('Error adding post:', error);
+      alert('Gagal menambahkan postingan. Coba lagi.');
+    }
   };
 
-  const handleUpdatePost = (updatedData: Omit<Post, 'id' | 'createdAt'>) => {
-    if (!postToEdit) return;
-    setPosts((prev) =>
-      prev.map((p) =>
-        p.id === postToEdit.id
-          ? { ...updatedData, id: p.id, createdAt: p.createdAt }
-          : p
-      )
-    );
+  // 🔥 Update Postingan
+  const handleUpdatePost = async ( data: Omit<Post, 'id' | 'createdAt'>) => {
+    if (!postToEdit || !auth.currentUser) return;
+    try {
+      const postRef = ref(rtdb, `admins/${auth.currentUser.uid}/posts/${postToEdit.id}`);
+      await update(postRef, {
+        ...data,
+        eventDate: data.eventDate.toISOString(),
+        closingDate: data.closingDate.toISOString(),
+      });
+    } catch (error) {
+      console.error('Error updating post:', error);
+      alert('Gagal memperbarui postingan. Coba lagi.');
+    }
   };
 
-  const handleDeletePost = (id: string) => {
-    setPosts((prev) => prev.filter((p) => p.id !== id));
+  // 🔥 Hapus Postingan
+  const handleDeletePost = async (id: string) => {
+    if (!auth.currentUser) return;
+    try {
+      const postRef = ref(rtdb, `admins/${auth.currentUser.uid}/posts/${id}`);
+      await remove(postRef);
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      alert('Gagal menghapus postingan. Coba lagi.');
+    }
   };
 
   const handleAddClick = () => {
@@ -377,6 +424,14 @@ const AdminPost: React.FC = () => {
   const closeDetailModal = () => {
     setSelectedPostForDetail(null);
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen text-white">
+        Memuat data postingan...
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 relative min-h-screen pb-24">
@@ -412,29 +467,26 @@ const AdminPost: React.FC = () => {
       )}
 
       {/* Floating Button */}
-      {/* Tombol Plus - Mobile */}
-        <div className="fixed sm:hidden bottom-5 right-4 z-10">
-          <button
-            onClick={handleAddClick}
-            className="p-3 bg-blue-600 rounded-full text-white shadow-xl hover:bg-blue-500 transition transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-blue-400"
-            aria-label="Tambah Postingan"
-          >
-            <Plus size={24} />
-          </button>
-        </div>
+      <div className="fixed sm:hidden bottom-5 right-4 z-10">
+        <button
+          onClick={handleAddClick}
+          className="p-3 bg-blue-600 rounded-full text-white shadow-xl hover:bg-blue-500 transition transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-blue-400"
+          aria-label="Tambah Postingan"
+        >
+          <Plus size={24} />
+        </button>
+      </div>
 
-        {/* Tombol Plus - Desktop */}
-        <div className="fixed hidden sm:block bottom-6 right-6 z-10">
-          <button
-            onClick={handleAddClick}
-            className="p-4 bg-blue-600 rounded-full text-white shadow-lg hover:bg-blue-500 transition transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-blue-400"
-            aria-label="Tambah Postingan"
-          >
-            <Plus size={24} />
-          </button>
-        </div>
+      <div className="fixed hidden sm:block bottom-6 right-6 z-10">
+        <button
+          onClick={handleAddClick}
+          className="p-4 bg-blue-600 rounded-full text-white shadow-lg hover:bg-blue-500 transition transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-blue-400"
+          aria-label="Tambah Postingan"
+        >
+          <Plus size={24} />
+        </button>
+      </div>
 
-      {/* Modal Tambah/Edit */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -449,7 +501,6 @@ const AdminPost: React.FC = () => {
         </div>
       </Modal>
 
-      {/* Modal Detail dari Bawah */}
       {selectedPostForDetail && (
         <PostDetailBottomModal
           post={selectedPostForDetail}

@@ -4,11 +4,11 @@ import { motion } from 'framer-motion';
 import LandingHeader from '../components/LandingHeader';
 import RotatingText from '../components/RotatingText';
 import { useAuth } from '../components/AuthProvider';
-import { Play, Pause } from 'lucide-react'; 
+import { Play, Pause } from 'lucide-react';
 
 export default function Landing() {
   const navigate = useNavigate();
-  const { user, isAudioPlaying, isEmailVerified, togglePlay } = useAuth(); 
+  const { user, isAudioPlaying, isEmailVerified, togglePlay } = useAuth();
 
   console.log('Email verified:', isEmailVerified);
 
@@ -42,7 +42,7 @@ export default function Landing() {
         </button>
       </div>
 
-  
+
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen text-center p-4 pt-20">
         <div className="max-w-4xl">
           <div className="flex flex-wrap justify-center items-end gap-3 mb-6">
@@ -67,7 +67,7 @@ export default function Landing() {
 
           <div className="mb-10 animate-fade-in-up">
             <p className="text-lg md:text-2xl text-slate-300 max-w-4xl mx-auto">
-              Platform terpercaya untuk menemukan lomba dan beasiswa impian Anda. 
+              Platform terpercaya untuk menemukan lomba dan beasiswa impian Anda.
               Mulai perjalanan menuju kesuksesan bersama Angkasa.
             </p>
           </div>
