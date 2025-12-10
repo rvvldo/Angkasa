@@ -17,15 +17,21 @@ import CentralDashboard from './pages/admin/CentralDashboard';
 import CentralUsers from './pages/admin/CentralUsers';
 import CentralReports from './pages/admin/CentralReports';
 import MaintenancePage from './pages/MaintenancePage';
-import { IS_MAINTENANCE_MODE } from './config/maintenance';
+import { MAINTENANCE_CONFIG } from './config/maintenance';
 import PublicProfile from './pages/PublicProfile';
 import DashAdminApp from './pages/DashAdmin/AdminDash';
+import CentralLogin from './pages/admin/CentralLogin';
+import CentralGuard from './components/CentralGuard';
 
 
-function App() {
-    if (IS_MAINTENANCE_MODE) {
+const MaintenanceWrapper = ({ isActive, children }: { isActive: boolean, children: React.ReactNode }) => {
+  if (isActive) {
     return <MaintenancePage />;
   }
+  return <>{children}</>;
+};
+
+function App() {
   return (
     <BrowserRouter>
       <AuthProvider> 
@@ -58,6 +64,28 @@ function App() {
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/daftar" element={<Register />} />
               </Route>
+              
+              {/* Separate Login for Admin Central (Accessible even if logged in as user) */}
+              <Route path="/admin/central/login" element={<CentralLogin />} /> 
+              
+              {/* Admin Central Routes - Protected by CentralGuard & Maintenance */}
+              <Route element={<CentralGuard />}>
+                <Route path="/admin/central" element={
+                  <MaintenanceWrapper isActive={MAINTENANCE_CONFIG.adminCentral}>
+                    <CentralDashboard />
+                  </MaintenanceWrapper>
+                } />
+                <Route path="/admin/central/users" element={
+                  <MaintenanceWrapper isActive={MAINTENANCE_CONFIG.adminCentral}>
+                    <CentralUsers />
+                  </MaintenanceWrapper>
+                } />
+                <Route path="/admin/central/reports" element={
+                  <MaintenanceWrapper isActive={MAINTENANCE_CONFIG.adminCentral}>
+                    <CentralReports />
+                  </MaintenanceWrapper>
+                } />
+              </Route>
 
               {/* Protected Routes */}
               <Route element={<ProtectedRoute />}>
@@ -71,29 +99,23 @@ function App() {
                 <Route path="/email/accepted/:id" element={<EmailDetail />} />
                 <Route path="/notifications" element={<Notifikasi />} />
 
-                {/* Admin Routes */}
-                <Route path="/admin/central" element={<CentralDashboard />} />
-                <Route path="/admin/central/users" element={<CentralUsers />} />
-                <Route path="/admin/central/reports" element={<CentralReports />} />
               </Route>
 
-              {/* AdminDash Routes */}
+              {/* DashAdmin Routes */}
                 <Route
                   path="/DashAdmin"
                   element={
-                    <>
-                      {console.log('Rendering DashAdminApp for /DashAdmin')}
+                    <MaintenanceWrapper isActive={MAINTENANCE_CONFIG.dashAdmin}>
                       <DashAdminApp />
-                    </>
+                    </MaintenanceWrapper>
                   }
                 />
                 <Route
                   path="/DashAdmin/AdminDash"
                   element={
-                    <>
-                      {console.log('Rendering DashAdminApp for /DashaAdmin/AdminDash')}
+                    <MaintenanceWrapper isActive={MAINTENANCE_CONFIG.dashAdmin}>
                       <DashAdminApp />
-                    </>
+                    </MaintenanceWrapper>
                   }
                 />
             </Routes>
