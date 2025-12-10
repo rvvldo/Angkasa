@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Bot, Send, X, Sparkles, MessageSquare } from 'lucide-react';
+import { chatWithGemini } from '../services/gemini';
 
 interface Message {
     id: string;
@@ -48,23 +49,34 @@ export default function AIAgent() {
         // Simulate AI response
         setTimeout(() => {
             const aiResponses = [
-                // "Hahay Pal Pale Pal Pale",
-                // "ML Anjing, PUBG Anjing, FF Mabar",
-                // "Kontol lu semua anjing",
-                "sena suka raka"
+                "Menarik! Ceritakan lebih lanjut.",
+                "Saya bisa membantu Anda menavigasi ke halaman Profil atau Forum.",
+                "Angkasa adalah platform untuk pengembangan diri dan karir.",
+                "Coba cek bagian Pencapaian di profil Anda!",
+                "Apakah Anda sudah memverifikasi email Anda?",
             ];
             const randomResponse = aiResponses[Math.floor(Math.random() * aiResponses.length)];
 
             const aiMessage: Message = {
                 id: (Date.now() + 1).toString(),
-                text: randomResponse,
+                text: responseText,
                 sender: 'ai',
                 timestamp: new Date(),
             };
 
             setMessages((prev) => [...prev, aiMessage]);
+        } catch (error) {
+            console.error("Failed to get AI response:", error);
+            const errorMessage: Message = {
+                id: (Date.now() + 1).toString(),
+                text: "Maaf, terjadi kesalahan saat menghubungi server AI.",
+                sender: 'ai',
+                timestamp: new Date(),
+            };
+            setMessages((prev) => [...prev, errorMessage]);
+        } finally {
             setIsTyping(false);
-        }, 1500);
+        }
     };
 
     return (
@@ -175,3 +187,4 @@ export default function AIAgent() {
         </div>
     );
 }
+    

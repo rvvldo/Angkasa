@@ -85,6 +85,28 @@ function App() {
                   </MaintenanceWrapper>
                 } />
               </Route>
+              
+              {/* Separate Login for Admin Central (Accessible even if logged in as user) */}
+              <Route path="/admin/central/login" element={<CentralLogin />} /> 
+              
+              {/* Admin Central Routes - Protected by CentralGuard & Maintenance */}
+              <Route element={<CentralGuard />}>
+                <Route path="/admin/central" element={
+                  <MaintenanceWrapper isActive={MAINTENANCE_CONFIG.adminCentral}>
+                    <CentralDashboard />
+                  </MaintenanceWrapper>
+                } />
+                <Route path="/admin/central/users" element={
+                  <MaintenanceWrapper isActive={MAINTENANCE_CONFIG.adminCentral}>
+                    <CentralUsers />
+                  </MaintenanceWrapper>
+                } />
+                <Route path="/admin/central/reports" element={
+                  <MaintenanceWrapper isActive={MAINTENANCE_CONFIG.adminCentral}>
+                    <CentralReports />
+                  </MaintenanceWrapper>
+                } />
+              </Route>
 
               {/* Protected Routes */}
               <Route element={<ProtectedRoute />}>
