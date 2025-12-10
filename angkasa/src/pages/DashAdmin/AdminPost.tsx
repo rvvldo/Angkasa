@@ -11,6 +11,7 @@ import {
   Clock,
   MoreVertical,
   X,
+  Tag,
 } from 'lucide-react';
 import type { Post } from './AdminCommon';
 import { InputField, Modal } from './AdminCommon';
@@ -21,7 +22,7 @@ import { auth, rtdb } from '../../firebase';
 const PostForm: React.FC<{
   onClose: () => void;
   postToEdit?: Post | null;
-  onSubmit: (post: Omit<Post, 'id' | 'createdAt'>) => void;
+  onSubmit: (data: Omit<Post, 'id' | 'createdAt'>) => void;
 }> = ({ onClose, postToEdit, onSubmit }) => {
   const [title, setTitle] = useState(postToEdit?.title || '');
   const [description, setDescription] = useState(postToEdit?.description || '');
@@ -33,6 +34,13 @@ const PostForm: React.FC<{
     postToEdit ? postToEdit.closingDate.toISOString().split('T')[0] : ''
   );
   const [registrationLink, setRegistrationLink] = useState(postToEdit?.registrationLink || '');
+  const [type, setType] = useState<'lomba' | 'beasiswa'>(
+    postToEdit?.type || 'lomba'
+  );
+  const [tagInput, setTagInput] = useState('');
+  const [tags, setTags] = useState<string[]>(
+    postToEdit?.tags || []
+  );
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -56,8 +64,24 @@ const PostForm: React.FC<{
       eventDate: new Date(eventDate),
       closingDate: new Date(closingDate),
       registrationLink: registrationLink || '#',
+      type,
+      tags,
     });
     onClose();
+  };
+
+  const addTag = () => {
+    if (!tagInput.trim()) return;
+    if (tags.includes(tagInput.trim())) {
+      setError('Tag sudah ada.');
+      return;
+    }
+    setTags([...tags, tagInput.trim()]);
+    setTagInput('');
+  };
+
+  const removeTag = (index: number) => {
+    setTags(tags.filter((_, i) => i !== index));
   };
 
   return (
@@ -87,6 +111,89 @@ const PostForm: React.FC<{
         required={false}
         Icon={Image}
       />
+
+      {/* Tipe Postingan */}
+      <div className="space-y-1">
+        <label htmlFor="type" className="text-sm font-medium text-white flex items-center">
+          <Tag size={16} className="mr-2 text-blue-400" />
+          Tipe Postingan <span className="text-red-400 ml-1">*</span>
+        </label>
+        <div className="flex space-x-2">
+          <button
+            type="button"
+            onClick={() => setType('lomba')}
+            className={`flex-1 py-2 px-3 rounded-lg border transition ${
+              type === 'lomba'
+                ? 'bg-blue-700/50 border-blue-500 text-blue-300'
+                : 'bg-gray-800 border-slate-600 text-gray-300 hover:bg-gray-700'
+            }`}
+          >
+            <Tag size={16} className="inline mr-1" /> Lomba
+          </button>
+          <button
+            type="button"
+            onClick={() => setType('beasiswa')}
+            className={`flex-1 py-2 px-3 rounded-lg border transition ${
+              type === 'beasiswa'
+                ? 'bg-purple-700/50 border-purple-500 text-purple-300'
+                : 'bg-gray-800 border-slate-600 text-gray-300 hover:bg-gray-700'
+            }`}
+          >
+            <Tag size={16} className="inline mr-1" /> Beasiswa
+          </button>
+        </div>
+      </div>
+
+      {/* Hashtag Input */}
+      <div className="space-y-1">
+        <label htmlFor="tagInput" className="text-sm font-medium text-white flex items-center">
+          <Tag size={16} className="mr-2 text-blue-400" />
+          Hashtag (Opsional)
+        </label>
+        <div className="flex gap-2">
+          <input
+            id="tagInput"
+            type="text"
+            value={tagInput}
+            onChange={(e) => setTagInput(e.target.value)}
+            placeholder="Contoh: #desain, #nasional, #mahasiswa"
+            className="flex-1 px-4 py-2 border border-slate-600 bg-gray-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-slate-500 transition duration-150"
+          />
+          <button
+            type="button"
+            onClick={addTag}
+            className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition"
+          >
+            +
+          </button>
+        </div>
+        {error && error.startsWith('Tag') && (
+          <p className="text-red-400 text-sm italic mt-1">{error}</p>
+        )}
+      </div>
+
+      {/* Daftar Tag */}
+      {tags.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 pt-2">
+          {tags.map((tag, index) => (
+            <div
+              key={index}
+              className="px-2.5 py-1 bg-slate-700/40 text-slate-300 text-xs rounded-full flex items-center gap-1"
+            >
+              #{tag}
+              <button
+                type="button"
+                onClick={() => removeTag(index)}
+                className="ml-1 text-slate-400 hover:text-slate-200"
+                aria-label={`Hapus tag ${tag}`}
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       <InputField
         id="eventDate"
         label="Tanggal Acara"
@@ -111,7 +218,9 @@ const PostForm: React.FC<{
         onChange={setRegistrationLink}
         Icon={LinkIcon}
       />
-      {error && <p className="text-red-400 text-sm italic mt-2">{error}</p>}
+      {error && !error.startsWith('Tag') && (
+        <p className="text-red-400 text-sm italic mt-2">{error}</p>
+      )}
       <div className="flex justify-end space-x-3 pt-4">
         <button
           type="button"
@@ -192,6 +301,17 @@ const PostDetailBottomModal: React.FC<{
           </div>
         </div>
 
+        {/* Tags */}
+        {post.tags && post.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mb-4">
+            {post.tags.map((tag, i) => (
+              <span key={i} className="px-2.5 py-1 bg-slate-700/40 text-slate-300 text-xs rounded-full">
+                #{tag}
+              </span>
+            ))}
+          </div>
+        )}
+
         <a
           href={post.registrationLink}
           target="_blank"
@@ -256,6 +376,21 @@ const PostCard: React.FC<{
           <p className="text-xs text-gray-300 line-clamp-2 break-words">
             {truncateText(post.description, 30)}
           </p>
+          {/* Tags */}
+          {post.tags && post.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {post.tags.slice(0, 2).map((tag, i) => (
+                <span key={i} className="px-1 py-0.5 bg-slate-700/40 text-slate-300 text-xs rounded">
+                  #{tag}
+                </span>
+              ))}
+              {post.tags.length > 2 && (
+                <span className="px-1 py-0.5 bg-slate-700/40 text-slate-300 text-xs rounded">
+                  +{post.tags.length - 2}
+                </span>
+              )}
+            </div>
+          )}
         </div>
         <button
           onClick={() => onMoreClick(post)}
@@ -283,6 +418,16 @@ const PostCard: React.FC<{
         <div className="flex-grow space-y-2">
           <h3 className="text-lg font-bold text-blue-400 line-clamp-1">{post.title}</h3>
           <p className="text-sm text-gray-300 line-clamp-2">{post.description}</p>
+          {/* Tags */}
+          {post.tags && post.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {post.tags.map((tag, i) => (
+                <span key={i} className="px-2 py-0.5 bg-slate-700/40 text-slate-300 text-xs rounded">
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-1 text-xs text-gray-400">
             <p className="flex items-center">
               <Calendar size={12} className="mr-1 text-blue-400" /> {post.eventDate.toLocaleDateString('id-ID')}
@@ -321,7 +466,7 @@ const PostCard: React.FC<{
   );
 };
 
-// Component: AdminPost — Versi Multi-Admin
+// Component: AdminPost — Versi Akhir
 const AdminPost: React.FC = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
@@ -329,7 +474,6 @@ const AdminPost: React.FC = () => {
   const [postToEdit, setPostToEdit] = useState<Post | null>(null);
   const [selectedPostForDetail, setSelectedPostForDetail] = useState<Post | null>(null);
 
-  // 🔥 Ambil data hanya milik admin yang sedang login
   useEffect(() => {
     const currentUser = auth.currentUser;
     if (!currentUser) {
@@ -359,48 +503,83 @@ const AdminPost: React.FC = () => {
     return () => unsubscribe();
   }, []);
 
-  // 🔥 Tambah Postingan ke folder admin
+  // 🔥 TAMBAH POSTINGAN → GUNAKAN SATU ID UNTUK KEDUA TEMPAT
   const handleAddPost = async (data: Omit<Post, 'id' | 'createdAt'>) => {
     const currentUser = auth.currentUser;
     if (!currentUser) return;
 
     try {
-      const postsRef = ref(rtdb, `admins/${currentUser.uid}/posts`);
-      const newPostRef = push(postsRef);
+      // 🔥 Buat ID sekali di path global
+      const globalPostsRef = ref(rtdb, 'posts');
+      const newPostRef = push(globalPostsRef);
+      const postId = newPostRef.key!;
+
+      // 1. Simpan ke path global (forum)
       await set(newPostRef, {
+        id: postId,
+        author: currentUser.displayName || currentUser.email?.split('@')[0] || 'Admin',
+        avatar: '',
+        content: data.description,
+        image: data.imageUrl,
+        likes: 0,
+        comments: [],
+        timestamp: new Date().toISOString(),
+        category: data.type === 'lomba' ? 'lomba' : 'beasiswa',
+        title: data.title,
+        type: data.type,
+        tags: data.tags || [],
+        registrationLink: data.registrationLink,
+        eventDate: data.eventDate.toISOString(),
+        closingDate: data.closingDate.toISOString(),
+      });
+
+      // 2. Simpan ke folder admin — dengan ID yang sama
+      await set(ref(rtdb, `admins/${currentUser.uid}/posts/${postId}`), {
         ...data,
         createdAt: new Date().toISOString(),
         eventDate: data.eventDate.toISOString(),
         closingDate: data.closingDate.toISOString(),
       });
+
     } catch (error) {
       console.error('Error adding post:', error);
       alert('Gagal menambahkan postingan. Coba lagi.');
     }
   };
 
-  // 🔥 Update Postingan
-  const handleUpdatePost = async ( data: Omit<Post, 'id' | 'createdAt'>) => {
-    if (!postToEdit || !auth.currentUser) return;
+  // 🔥 UPDATE → GUNAKAN ID YANG SAMA
+  const handleUpdatePost = async (data: Omit<Post, 'id' | 'createdAt'>) => {
+    if (!postToEdit) return;
+
     try {
-      const postRef = ref(rtdb, `admins/${auth.currentUser.uid}/posts/${postToEdit.id}`);
-      await update(postRef, {
+      await update(ref(rtdb, `admins/${auth.currentUser?.uid}/posts/${postToEdit.id}`), {
         ...data,
         eventDate: data.eventDate.toISOString(),
         closingDate: data.closingDate.toISOString(),
       });
+
+      await update(ref(rtdb, `posts/${postToEdit.id}`), {
+        title: data.title,
+        description: data.description,
+        imageUrl: data.imageUrl,
+        eventDate: data.eventDate.toISOString(),
+        closingDate: data.closingDate.toISOString(),
+        registrationLink: data.registrationLink,
+        type: data.type,
+        tags: data.tags || [],
+      });
+
     } catch (error) {
       console.error('Error updating post:', error);
       alert('Gagal memperbarui postingan. Coba lagi.');
     }
   };
 
-  // 🔥 Hapus Postingan
+  // 🔥 HAPUS → GUNAKAN ID YANG SAMA
   const handleDeletePost = async (id: string) => {
-    if (!auth.currentUser) return;
     try {
-      const postRef = ref(rtdb, `admins/${auth.currentUser.uid}/posts/${id}`);
-      await remove(postRef);
+      await remove(ref(rtdb, `admins/${auth.currentUser?.uid}/posts/${id}`));
+      await remove(ref(rtdb, `posts/${id}`));
     } catch (error) {
       console.error('Error deleting post:', error);
       alert('Gagal menghapus postingan. Coba lagi.');

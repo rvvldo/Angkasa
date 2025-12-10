@@ -170,7 +170,7 @@ export const AdminDash: React.FC = () => {
       {/* DESKTOP SIDEBAR */}
       <div className="hidden md:flex">
         <aside className="w-64 bg-slate-800 border border-slate-700 shadow-2xl fixed h-full p-4 flex flex-col">
-          <div className="flex items-center mb-6">
+          <div className="flex items-center mb-6 gap-2">
             <div
               className="w-10 h-10 rounded-full text-white font-bold flex items-center justify-center"
               style={{ backgroundColor: profileColor }}

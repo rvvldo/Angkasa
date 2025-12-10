@@ -48,11 +48,10 @@ export default function AIAgent() {
         // Simulate AI response
         setTimeout(() => {
             const aiResponses = [
-                "Menarik! Ceritakan lebih lanjut.",
-                "Saya bisa membantu Anda menavigasi ke halaman Profil atau Forum.",
-                "Angkasa adalah platform untuk pengembangan diri dan karir.",
-                "Coba cek bagian Pencapaian di profil Anda!",
-                "Apakah Anda sudah memverifikasi email Anda?",
+                // "Hahay Pal Pale Pal Pale",
+                // "ML Anjing, PUBG Anjing, FF Mabar",
+                // "Kontol lu semua anjing",
+                "sena suka raka"
             ];
             const randomResponse = aiResponses[Math.floor(Math.random() * aiResponses.length)];
 

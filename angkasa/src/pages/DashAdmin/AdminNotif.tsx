@@ -268,7 +268,6 @@ const AdminNotif: React.FC = () => {
   const [notifToEdit, setNotifToEdit] = useState<Notification | null>(null);
   const [isModalSubmitting, setIsModalSubmitting] = useState(false);
 
-  // 🔥 Ambil notifikasi hanya milik admin yang sedang login
   useEffect(() => {
     const currentUser = auth.currentUser;
     if (!currentUser) {
@@ -296,7 +295,6 @@ const AdminNotif: React.FC = () => {
     return () => unsubscribe();
   }, []);
 
-  // 🔥 Kirim Notifikasi ke folder admin
 const handleSendNotification = async (e: React.FormEvent) => {
   e.preventDefault();
   const trimmedTitle = title.trim();
@@ -331,17 +329,17 @@ const handleSendNotification = async (e: React.FormEvent) => {
   };
 
   try {
-    // 1️⃣ Simpan ke folder admin (untuk manajemen CRUD)
+    // Simpan ke folder admin (untuk manajemen CRUD)
     const adminNotifRef = ref(rtdb, `admins/${currentUser.uid}/notifications`);
     const newAdminNotifRef = push(adminNotifRef);
     await set(newAdminNotifRef, notifData);
 
-    // 2️⃣ Simpan ke path global (untuk peserta)
+    // Simpan ke path global (untuk peserta)
     const globalNotifRef = ref(rtdb, 'notifications');
     const newGlobalNotifRef = push(globalNotifRef);
     await set(newGlobalNotifRef, {
       ...notifData,
-      adminId: currentUser.uid, // Opsional: untuk tracking
+      adminId: currentUser.uid, 
     });
 
     setSubmitStatus({ message: 'Notifikasi berhasil dikirim!', success: true });

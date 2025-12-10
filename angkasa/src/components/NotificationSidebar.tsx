@@ -1,7 +1,8 @@
 // src/components/NotificationSidebar.tsx
-import { X, Bell, Trophy, Medal, User } from "lucide-react";
+import { X, Bell, Trophy, Medal, User, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { ref, onValue } from "firebase/database";
+import { ref, onValue, set, remove } from "firebase/database";
+import { auth } from "../firebase";
 import { rtdb } from "../firebase";
 
 // Tipe data dari Firebase
@@ -56,18 +57,18 @@ const formatRelativeTime = (isoString: string): string => {
   });
 };
 
-// Modal Detail Notifikasi — versi tengah layar, match UI sidebar
+// Modal Detail Notifikasi
 const NotificationDetailModal: React.FC<{
   notification: Notification;
   onClose: () => void;
-}> = ({ notification, onClose }) => {
+  onDelete: () => void;
+}> = ({ notification, onClose, onDelete }) => {
   const { sentBy } = notification;
   const initials = getInitials(sentBy.displayName, sentBy.email);
   const adminName = sentBy.displayName || sentBy.email?.split("@")[0] || "Admin";
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
-      {/* Modal Content */}
       <div className="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl w-full max-w-md mx-auto">
         <div className="flex justify-between items-center p-4 border-b border-slate-700">
           <h2 className="text-lg font-bold text-white">Detail Notifikasi</h2>
@@ -77,7 +78,6 @@ const NotificationDetailModal: React.FC<{
         </div>
 
         <div className="p-4 space-y-4">
-          {/* Profil Admin */}
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-full bg-blue-700 flex items-center justify-center text-white font-bold text-lg">
               {initials}
@@ -88,13 +88,9 @@ const NotificationDetailModal: React.FC<{
             </div>
           </div>
 
-          {/* Judul */}
           <h3 className="text-xl font-bold text-blue-400">{notification.title}</h3>
-
-          {/* Isi */}
           <p className="text-gray-300 whitespace-pre-line">{notification.message}</p>
 
-          {/* Badge */}
           {notification.badge && (
             <div className="mt-3">
               <span className="px-3 py-1 bg-blue-700/30 text-blue-300 text-sm font-medium rounded-full">
@@ -103,17 +99,23 @@ const NotificationDetailModal: React.FC<{
             </div>
           )}
 
-          {/* Tipe & Waktu */}
           <div className="flex justify-between text-xs text-gray-500 mt-4">
             <span>{notification.type === "lomba" ? "🏆 Lomba" : "🎓 Beasiswa"}</span>
             <span>{notification.formattedTime}</span>
           </div>
         </div>
 
-        <div className="p-4 border-t border-slate-700">
+        <div className="p-4 border-t border-slate-700 flex gap-2">
+          <button
+            onClick={onDelete}
+            className="flex-1 py-2 bg-red-600 text-white rounded-lg hover:bg-red-500 transition flex items-center justify-center gap-1"
+          >
+            <Trash2 size={16} />
+            Hapus
+          </button>
           <button
             onClick={onClose}
-            className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition"
+            className="flex-1 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition"
           >
             Tutup
           </button>
@@ -134,63 +136,79 @@ export default function NotificationSidebar({ isOpen, onClose }: NotificationSid
   const [loading, setLoading] = useState(true);
   const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
 
+  // Gunakan nilai primitif sebagai dependensi
+  const currentUser = auth.currentUser;
+  const currentUserUid = currentUser?.uid || null;
+
   // Ambil data dari Firebase
   useEffect(() => {
-    if (!isOpen) return;
-
-    const notifsRef = ref(rtdb, "notifications");
-    const unsubscribe = onValue(notifsRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const data = snapshot.val();
-        const firebaseNotifs: FirebaseNotification[] = Object.keys(data).map((key) => ({
-          id: key,
-          ...data[key],
-          badge: data[key].badge || null,
-          sentBy: data[key].sentBy || { uid: "unknown" },
-        }));
-
-        const readStatusKey = localStorage.getItem("userUid")
-          ? `notif_read_status_${localStorage.getItem("userUid")}`
-          : "notif_read_status_guest";
-        const readSet = new Set(JSON.parse(localStorage.getItem(readStatusKey) || "[]"));
-
-        const uiNotifs: Notification[] = firebaseNotifs
-          .map((notif) => ({
-            ...notif,
-            isRead: readSet.has(notif.id),
-            formattedTime: formatRelativeTime(notif.timestamp),
-          }))
-          .sort((a, b) => (a.isRead !== b.isRead ? (a.isRead ? 1 : -1) : 0));
-
-        setNotifications(uiNotifs);
-      } else {
-        setNotifications([]);
-      }
+    if (!isOpen || !currentUserUid) {
       setLoading(false);
+      return;
+    }
+
+    const globalNotifsRef = ref(rtdb, "notifications");
+    const userNotifsRef = ref(rtdb, `user_notifications/${currentUserUid}`);
+
+    const unsubscribeGlobal = onValue(globalNotifsRef, (snapshot) => {
+      const globalNotifs = snapshot.val() || {};
+
+      const unsubscribeUser = onValue(userNotifsRef, (userSnapshot) => {
+        const userNotifs = userSnapshot.val() || {};
+
+        const mergedNotifs: Notification[] = Object.keys(globalNotifs).map((id) => {
+          const global = globalNotifs[id];
+          const user = userNotifs[id] || { isRead: false };
+          return {
+            ...global,
+            id,
+            isRead: user.isRead,
+            formattedTime: formatRelativeTime(global.timestamp),
+          };
+        });
+
+        mergedNotifs.sort((a, b) => (a.isRead !== b.isRead ? (a.isRead ? 1 : -1) : 0));
+        setNotifications(mergedNotifs);
+        setLoading(false);
+      });
+
+      return () => unsubscribeUser();
     });
 
-    return () => unsubscribe();
-  }, [isOpen]);
+    return () => unsubscribeGlobal();
+  }, [isOpen, currentUserUid]); // ✅ Hanya primitif
 
   const markAsRead = (id: string) => {
-    const readStatusKey = localStorage.getItem("userUid")
-      ? `notif_read_status_${localStorage.getItem("userUid")}`
-      : "notif_read_status_guest";
-    const readSet = new Set(JSON.parse(localStorage.getItem(readStatusKey) || "[]"));
-    readSet.add(id);
-    localStorage.setItem(readStatusKey, JSON.stringify(Array.from(readSet)));
-    setNotifications((prev) =>
-      prev.map((notif) => (notif.id === id ? { ...notif, isRead: true } : notif))
-    );
+    if (!currentUserUid) return;
+    const userNotifRef = ref(rtdb, `user_notifications/${currentUserUid}/${id}`);
+    set(userNotifRef, { isRead: true });
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
   };
 
   const markAllAsRead = () => {
-    const readStatusKey = localStorage.getItem("userUid")
-      ? `notif_read_status_${localStorage.getItem("userUid")}`
-      : "notif_read_status_guest";
-    const allIds = notifications.map((n) => n.id);
-    localStorage.setItem(readStatusKey, JSON.stringify(allIds));
-    setNotifications((prev) => prev.map((notif) => ({ ...notif, isRead: true })));
+    if (!currentUserUid) return;
+    notifications.forEach((n) => {
+      const userNotifRef = ref(rtdb, `user_notifications/${currentUserUid}/${n.id}`);
+      set(userNotifRef, { isRead: true });
+    });
+    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+  };
+
+  const deleteNotification = (id: string) => {
+    if (!currentUserUid) return;
+    const userNotifRef = ref(rtdb, `user_notifications/${currentUserUid}/${id}`);
+    remove(userNotifRef);
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+  };
+
+  const deleteAllNotifications = () => {
+    if (!currentUserUid) return;
+    if (!window.confirm("Hapus semua notifikasi? Tindakan ini tidak bisa dikembalikan.")) return;
+    notifications.forEach((n) => {
+      const userNotifRef = ref(rtdb, `user_notifications/${currentUserUid}/${n.id}`);
+      remove(userNotifRef);
+    });
+    setNotifications([]);
   };
 
   const handleNotificationClick = (notif: Notification) => {
@@ -217,10 +235,8 @@ export default function NotificationSidebar({ isOpen, onClose }: NotificationSid
 
   return (
     <>
-      {/* Backdrop */}
       {isOpen && <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60]" />}
 
-      {/* Sidebar */}
       <div
         ref={sidebarRef}
         className={`fixed top-0 right-0 h-full w-full sm:w-96 bg-slate-900/95 border-l border-slate-700/50 shadow-2xl z-[70] transform transition-transform duration-300 ease-in-out ${
@@ -271,7 +287,6 @@ export default function NotificationSidebar({ isOpen, onClose }: NotificationSid
                   )}
 
                   <div className="flex gap-4">
-                    {/* ✅ Ganti ikon dengan profil admin */}
                     <div className="mt-1 flex-shrink-0">
                       <div className="w-10 h-10 rounded-full bg-blue-700 flex items-center justify-center text-white font-bold text-sm">
                         {getInitials(notification.sentBy.displayName, notification.sentBy.email)}
@@ -316,22 +331,34 @@ export default function NotificationSidebar({ isOpen, onClose }: NotificationSid
             )}
           </div>
 
-          <div className="p-4 border-t border-slate-700/50 bg-slate-800/30">
+          {/* Footer: Tandai & Hapus Semua */}
+          <div className="p-4 border-t border-slate-700/50 bg-slate-800/30 flex gap-2">
             <button
               onClick={markAllAsRead}
-              className="w-full py-2 text-sm text-slate-400 hover:text-white transition-colors"
+              className="flex-1 py-2 text-sm text-slate-400 hover:text-white transition-colors"
             >
-              Tandai semua sudah dibaca
+              Tandai Sudah Dibaca
+            </button>
+            <button
+              onClick={deleteAllNotifications}
+              className="flex-1 py-2 text-sm text-red-400 hover:text-red-300 transition-colors flex items-center justify-center gap-1"
+            >
+              <Trash2 size={14} />
+              Hapus Semua
             </button>
           </div>
         </div>
       </div>
 
-      {/* ✅ Modal Detail — di tengah layar, z-index tinggi */}
+      {/* Modal Detail */}
       {selectedNotification && (
         <NotificationDetailModal
           notification={selectedNotification}
           onClose={() => setSelectedNotification(null)}
+          onDelete={() => {
+            deleteNotification(selectedNotification.id);
+            setSelectedNotification(null);
+          }}
         />
       )}
     </>

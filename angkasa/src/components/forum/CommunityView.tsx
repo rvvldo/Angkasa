@@ -1,6 +1,23 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Users, Plus, Search, ArrowLeft, Shield, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { db } from '../../firebase';
+import { useAuth } from '../AuthProvider';
+import {
+  increment,
+  collection,
+  addDoc,
+  query,
+  where,
+  getDocs,
+  getDoc,
+  serverTimestamp,
+  doc,
+  updateDoc,
+  arrayUnion,
+} from 'firebase/firestore';
+
+
 
 interface Community {
     id: string;
@@ -25,16 +42,213 @@ const mockMembers = [
     { id: 4, name: 'Dewi Lestari', role: 'Member' },
 ];
 
+
 export default function CommunityView() {
     const navigate = useNavigate();
     const [viewMode, setViewMode] = useState<'menu' | 'create' | 'join' | 'detail'>('menu');
     const [selectedCommunity, setSelectedCommunity] = useState<Community | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [communities, setCommunities] = useState<Community[]>([]);
+    const [loading, setLoading] = useState(true);
+    const { user } = useAuth();
+    const [name, setName] = useState('');
+    const [description, setDescription] = useState('');
+    const [type, setType] = useState<'lomba' | 'beasiswa' | 'seminar'>('lomba');
+    const [members, setMembers] = useState<{ id: string; name: string; role: string }[]>([]);
+    const [loadingMembers, setLoadingMembers] = useState(true);
+    const [isMember, setIsMember] = useState(false);
+    const [checkingMembership, setCheckingMembership] = useState(true);
 
-    const handleCommunityClick = (community: Community) => {
-        setSelectedCommunity(community);
-        setViewMode('detail');
-    };
+    useEffect(() => {
+  const checkMembership = async () => {
+    if (!user || !selectedCommunity) {
+      setIsMember(false);
+      setCheckingMembership(false);
+      return;
+    }
+
+    const q = query(
+      collection(db, 'memberships'),
+      where('community_id', '==', selectedCommunity.id),
+      where('user_id', '==', user.id)
+    );
+    const snap = await getDocs(q);
+    setIsMember(!snap.empty);
+    setCheckingMembership(false);
+  };
+
+  checkMembership();
+}, [user, selectedCommunity]);
+
+    useEffect(() => {
+  const loadCommunities = async () => {
+    try {
+      const q = query(collection(db, 'communities'));
+      const snapshot = await getDocs(q);
+      const list = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        members: doc.data().members_count || 0,
+      })) as Community[];
+      setCommunities(list);
+    } catch (err) {
+      console.error('Gagal muat komunitas:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (viewMode === 'join') {
+    loadCommunities();
+  }
+}, [viewMode]);
+
+
+const loadMembers = async (communityId: string) => {
+  setLoadingMembers(true);
+  try {
+    // 1. Ambil semua membership
+    const membershipQuery = query(
+      collection(db, 'memberships'),
+      where('community_id', '==', communityId)
+    );
+    const membershipSnapshot = await getDocs(membershipQuery);
+    const memberIds = membershipSnapshot.docs.map(doc => doc.data().user_id);
+
+    if (memberIds.length === 0) {
+      setMembers([]);
+      setLoadingMembers(false);
+      return;
+    }
+
+    // 2. Ambil data user berdasarkan document ID (UID)
+    const userDocs = await Promise.all(
+      memberIds.map(uid => getDoc(doc(db, 'users', uid)))
+    );
+
+    // 3. Bangun daftar anggota
+    const memberList = membershipSnapshot.docs.map((_, index) => {
+      const mData = membershipSnapshot.docs[index].data();
+      const userDoc = userDocs[index];
+      const userData = userDoc?.exists() ? userDoc.data() : null;
+
+      return {
+        id: mData.user_id,
+        name: userData?.name || 'User',
+        role: mData.role || 'member',
+      };
+    });
+
+    setMembers(memberList);
+  } catch (err) {
+    console.error('Gagal muat anggota:', err);
+    setMembers([]);
+  } finally {
+    setLoadingMembers(false);
+  }
+};
+
+
+
+const handleCreateCommunity = async () => {
+    if (!user) {
+    alert('Anda harus login terlebih dahulu.');
+    return;
+  }
+//   // Ambil nilai dari form (gunakan state atau ref)
+//   const name = "Nama dari input"; // ✅ ganti dengan state
+//   const description = "Deskripsi dari input";
+//   const type = "lomba"; // ✅ ambil dari select
+
+  if (!name || !description || !type) {
+    alert('Semua field wajib diisi');
+    return;
+  }
+
+  if (!name.trim() || !description.trim()) {
+      alert('Nama dan deskripsi wajib diisi.');
+      return;
+    }
+
+  try {
+      const docRef = await addDoc(collection(db, 'communities'), {
+        name: name.trim(),
+        description: description.trim(),
+        type,
+        members_count: 1,
+        created_by: user.id, // ✅ sekarang user sudah didefinisikan
+        created_at: serverTimestamp(),
+      });
+
+    // Otomatis jadi owner
+    await addDoc(collection(db, 'memberships'), {
+      community_id: docRef.id,
+      user_id: user.id,
+      role: 'owner',
+      joined_at: serverTimestamp(),
+    });
+
+    alert('Komunitas berhasil dibuat!');
+    setViewMode('menu');
+  } catch (err) {
+    console.error('Gagal buat komunitas:', err);
+    alert('Gagal membuat komunitas.');
+  }
+};
+
+const handleJoinCommunity = async (communityId: string) => {
+  if (!user) {
+    navigate('/login', { state: { message: 'Login untuk gabung komunitas' } });
+    return;
+  }
+
+  try {
+    // 🔍 Cek apakah user sudah jadi anggota
+    const membershipQuery = query(
+      collection(db, 'memberships'),
+      where('community_id', '==', communityId),
+      where('user_id', '==', user.id)
+    );
+    const snapshot = await getDocs(membershipQuery);
+
+    if (!snapshot.empty) {
+      alert('Anda sudah menjadi anggota komunitas ini.');
+      return;
+    }
+
+    // ✅ Jika belum, baru gabung
+    await addDoc(collection(db, 'memberships'), {
+      community_id: communityId,
+      user_id: user.id,
+      role: 'member',
+      joined_at: serverTimestamp(),
+    });
+
+    // Update jumlah anggota
+    const communityRef = doc(db, 'communities', communityId);
+    await updateDoc(communityRef, {
+      members_count: increment(1),
+    });
+
+    alert('Berhasil gabung komunitas!');
+    
+    // Refresh daftar anggota jika sedang di halaman detail
+    if (selectedCommunity && selectedCommunity.id === communityId) {
+      await loadMembers(communityId);
+    }
+  } catch (err) {
+    console.error('Gagal gabung:', err);
+    alert('Gagal gabung komunitas.');
+  }
+};
+
+    const handleCommunityClick = async (community: Community) => {
+  setSelectedCommunity(community);
+  setViewMode('detail');
+  
+  // ✅ Muat anggota
+  await loadMembers(community.id);
+};
 
     const renderMenu = () => (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -71,22 +285,22 @@ export default function CommunityView() {
             <form className="space-y-4">
                 <div>
                     <label className="block text-sm font-medium text-slate-300 mb-1">Nama Komunitas</label>
-                    <input type="text" className="w-full px-4 py-2 bg-slate-900/40 border border-slate-700/50 rounded-lg text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="Contoh: Pejuang Beasiswa" />
+                    <input value={name} onChange={(e) => setName(e.target.value)} type="text" className="w-full px-4 py-2 bg-slate-900/40 border border-slate-700/50 rounded-lg text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="Contoh: Pejuang Beasiswa" />
                 </div>
                 <div>
                     <label className="block text-sm font-medium text-slate-300 mb-1">Deskripsi</label>
-                    <textarea className="w-full px-4 py-2 bg-slate-900/40 border border-slate-700/50 rounded-lg text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500" rows={4} placeholder="Jelaskan tentang komunitas ini..." />
+                    <textarea value={description} onChange={(e) => setDescription(e.target.value)} className="w-full px-4 py-2 bg-slate-900/40 border border-slate-700/50 rounded-lg text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500" rows={4} placeholder="Jelaskan tentang komunitas ini..." />
                 </div>
                 <div>
                     <label className="block text-sm font-medium text-slate-300 mb-1">Tipe Forum</label>
-                    <select className="w-full px-4 py-2 bg-slate-900/40 border border-slate-700/50 rounded-lg text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    <select value={type} onChange={(e) => setType(e.target.value as any)} className="w-full px-4 py-2 bg-slate-900/40 border border-slate-700/50 rounded-lg text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500">
                         <option value="lomba">Lomba</option>
                         <option value="beasiswa">Beasiswa</option>
                         <option value="seminar">Seminar</option>
                     </select>
                 </div>
                 <div className="pt-4">
-                    <button type="button" className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition-colors">
+                    <button onClick={handleCreateCommunity}  type="button" className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition-colors">
                         Buat Komunitas
                     </button>
                 </div>
@@ -113,7 +327,7 @@ export default function CommunityView() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {mockCommunities.map((community) => (
+                {communities.map((community) => (
                     <div
                         key={community.id}
                         onClick={() => handleCommunityClick(community)}
@@ -157,9 +371,29 @@ export default function CommunityView() {
                                 <span className="text-slate-500 text-sm">{selectedCommunity.members} Anggota</span>
                             </div>
                         </div>
-                        <button className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition-colors">
+                        {checkingMembership ? (
+                        <button className="px-6 py-2 bg-slate-600 text-white rounded-lg cursor-not-allowed">
+                            Memuat...
+                        </button>
+                        ) : isMember ? (
+                        <button className="px-6 py-2 bg-green-600 text-white rounded-lg cursor-default">
+                            Sudah Gabung
+                        </button>
+                        ) : user ? (
+                        <button
+                            onClick={() => selectedCommunity && handleJoinCommunity(selectedCommunity.id)}
+                            className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg"
+                        >
                             Gabung
                         </button>
+                        ) : (
+                        <button
+                            onClick={() => navigate('/login', { state: { message: 'Login untuk gabung komunitas' } })}
+                            className="px-6 py-2 bg-slate-600 hover:bg-slate-500 text-white rounded-lg"
+                        >
+                            Login untuk Gabung
+                        </button>
+                        )}
                     </div>
                 </div>
 
@@ -168,35 +402,41 @@ export default function CommunityView() {
                         <h3 className="font-semibold text-slate-200">Anggota Komunitas</h3>
                     </div>
                     <div className="divide-y divide-slate-700/50">
-                        {mockMembers.map((member) => (
-                            <div
+                        {loadingMembers ? (
+                            <div className="p-4 text-slate-500 text-sm">Memuat anggota...</div>
+                            ) : members.length > 0 ? (
+                            members.map((member) => (
+                                <div
                                 key={member.id}
                                 onClick={() => navigate(`/user/${member.id}`)}
                                 className="p-4 flex items-center justify-between hover:bg-slate-700/20 transition-colors cursor-pointer"
-                            >
+                                >
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-full bg-slate-700/50 flex items-center justify-center">
-                                        <span className="font-medium text-slate-300">{member.name.charAt(0)}</span>
+                                    <span className="font-medium text-slate-300">{member.name.charAt(0)}</span>
                                     </div>
                                     <div>
-                                        <p className="font-medium text-slate-200">{member.name}</p>
-                                        <p className="text-xs text-slate-500">Online 1 jam lalu</p>
+                                    <p className="font-medium text-slate-200">{member.name}</p>
+                                    <p className="text-xs text-slate-500">Online 1 jam lalu</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    {member.role === 'Owner' && (
-                                        <span className="px-2 py-0.5 bg-amber-500/20 text-amber-300 text-xs rounded flex items-center gap-1">
-                                            <Shield className="w-3 h-3" /> Owner
-                                        </span>
+                                    {member.role === 'owner' && (
+                                    <span className="px-2 py-0.5 bg-amber-500/20 text-amber-300 text-xs rounded flex items-center gap-1">
+                                        <Shield className="w-3 h-3" /> Owner
+                                    </span>
                                     )}
-                                    {member.role === 'Admin' && (
-                                        <span className="px-2 py-0.5 bg-blue-500/20 text-blue-300 text-xs rounded flex items-center gap-1">
-                                            <Shield className="w-3 h-3" /> Admin
-                                        </span>
+                                    {member.role === 'admin' && (
+                                    <span className="px-2 py-0.5 bg-blue-500/20 text-blue-300 text-xs rounded flex items-center gap-1">
+                                        <Shield className="w-3 h-3" /> Admin
+                                    </span>
                                     )}
                                 </div>
-                            </div>
-                        ))}
+                                </div>
+                            ))
+                            ) : (
+                            <div className="p-4 text-slate-500 text-sm">Belum ada anggota.</div>
+                            )}
                     </div>
                 </div>
             </div>
