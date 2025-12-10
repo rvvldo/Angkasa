@@ -10,6 +10,8 @@ export interface Post {
   eventDate: Date;
   closingDate: Date;
   registrationLink: string;
+  type: 'lomba' | 'beasiswa';
+  tags: string[]; 
   createdAt: Date;
 }
 

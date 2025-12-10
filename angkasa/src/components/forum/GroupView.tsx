@@ -58,6 +58,11 @@ export default function GroupView() {
         );
         const membershipSnap = await getDocs(membershipQuery);
         const communityIds = membershipSnap.docs.map(doc => doc.data().community_id);
+        console.log("User ID:", user.id);
+        console.log("Jumlah membership ditemukan:", membershipSnap.docs.length);
+        membershipSnap.docs.forEach(doc => {
+        console.log("Membership data:", doc.data());
+        });
 
         if (communityIds.length === 0) {
           setGroups([]);
@@ -81,6 +86,8 @@ export default function GroupView() {
             memberCount: data.members_count || 0,
           };
         });
+
+        
 
         setGroups(groupList);
       } catch (err) {
