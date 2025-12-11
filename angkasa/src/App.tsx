@@ -15,6 +15,7 @@ import Profil from './pages/Profil';
 import AIAgent from './components/AIAgent';
 import CentralDashboard from './pages/admin/CentralDashboard';
 import CentralUsers from './pages/admin/CentralUsers';
+import CentralPosts from './pages/admin/CentralPosts';
 import CentralReports from './pages/admin/CentralReports';
 import MaintenanceWrapper from './components/MaintenanceWrapper';
 import MaintenancePage from './pages/MaintenancePage';
@@ -65,6 +66,7 @@ function App() {
                 <Route element={<CentralGuard />}>
                   <Route path="/admin/central" element={<CentralDashboard />} />
                   <Route path="/admin/central/users" element={<CentralUsers />} />
+                  <Route path="/admin/central/posts" element={<CentralPosts />} />
                   <Route path="/admin/central/reports" element={<CentralReports />} />
                 </Route>
 

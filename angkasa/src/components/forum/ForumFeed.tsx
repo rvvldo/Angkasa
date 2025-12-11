@@ -14,17 +14,27 @@ import {
   LinkIcon,
   ChevronDown,
   Filter,
-  Clock, // Import ikon Clock untuk deadline
+  Clock,
 } from 'lucide-react';
-import { ref, onValue } from 'firebase/database';
+// 🔥 Import fungsi modular Firebase dengan benar
+import {
+  ref,
+  onValue,
+  update,
+  get,
+  push,
+  set, // ⬅️ wajib untuk set data
+  serverTimestamp,
+} from 'firebase/database';
 import { rtdb } from '../../firebase';
 
 interface Comment {
   id: string;
   author: string;
+  authorId: string;
   avatar?: string;
   text: string;
-  timestamp: string;
+  timestamp: string | number; // serverTimestamp bisa number saat disimpan
 }
 
 interface Post {
@@ -34,7 +44,7 @@ interface Post {
   content: string;
   image?: string;
   likes: number;
-  comments: Comment[];
+  comments: Record<string, Comment>;
   timestamp: string;
   category: 'lomba' | 'beasiswa';
   title?: string;
@@ -43,6 +53,7 @@ interface Post {
   registrationLink: string;
   eventDate: string;
   closingDate: string;
+  likedBy?: Record<string, boolean>;
 }
 
 const availableTypes = ['lomba', 'beasiswa'] as const;
@@ -65,7 +76,6 @@ export default function ForumFeed({
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Filter & UI states
   const [selectedType, setSelectedType] = useState<(typeof availableTypes)[number] | ''>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [activeTab, setActiveTab] = useState<'rekomendasi' | 'following'>('rekomendasi');
@@ -88,7 +98,7 @@ export default function ForumFeed({
           content: data[key].content || '',
           image: data[key].image || '',
           likes: data[key].likes || 0,
-          comments: data[key].comments || [],
+          comments: data[key].comments || {},
           timestamp: data[key].timestamp || new Date().toISOString(),
           category: data[key].category || 'lomba',
           title: data[key].title || '',
@@ -97,9 +107,9 @@ export default function ForumFeed({
           registrationLink: data[key].registrationLink || '#',
           eventDate: data[key].eventDate || new Date().toISOString(),
           closingDate: data[key].closingDate || new Date().toISOString(),
+          likedBy: data[key].likedBy || {},
         }));
 
-        // Urutkan dari yang terbaru
         postsArray.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
         setPosts(postsArray);
       } else {
@@ -111,7 +121,6 @@ export default function ForumFeed({
     return () => unsubscribe();
   }, []);
 
-  // Open search dropdown when triggered externally
   useEffect(() => {
     if (openSearchDropdown) {
       setIsSearchOpen(true);
@@ -128,7 +137,33 @@ export default function ForumFeed({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleLike = (postId: string) => {
+  // ❤️ Like/Unlike (Firebase Modular)
+  const handleLike = async (postId: string) => {
+    if (!user?.id) return;
+
+    const postRef = ref(rtdb, `posts/${postId}`);
+    const snapshot = await get(postRef);
+    if (!snapshot.exists()) return;
+
+    const postData = snapshot.val();
+    const likedBy = postData.likedBy || {};
+    const isLiked = likedBy[user.id] === true;
+
+    let newLikes = postData.likes || 0;
+    const updates: Record<string, any> = {};
+
+    if (isLiked) {
+      newLikes = Math.max(0, newLikes - 1);
+      updates[`likedBy/${user.id}`] = null;
+    } else {
+      newLikes += 1;
+      updates[`likedBy/${user.id}`] = true;
+    }
+
+    updates.likes = newLikes;
+    await update(postRef, updates);
+
+    // Animasi
     const heartEl = document.getElementById(`heart-${postId}`);
     if (heartEl) {
       heartEl.classList.remove('animate-ping');
@@ -146,20 +181,30 @@ export default function ForumFeed({
     });
   };
 
-const toggleShare = (postId: string) => {
-  setOpenShares(prev => {
-    const newSet = new Set(prev);
-    if (newSet.has(postId)) {
-      newSet.delete(postId);
-    } else {
-      newSet.add(postId);
-    }
-    return new Set(newSet);
-  });
-};
+  const toggleShare = (postId: string) => {
+    setOpenShares(prev => {
+      const newSet = new Set(prev);
+      newSet.has(postId) ? newSet.delete(postId) : newSet.add(postId);
+      return newSet;
+    });
+  };
 
-  const handleCommentSubmit = (postId: string, commentText: string) => {
-    if (!commentText.trim() || !user) return;
+  // 💬 Komentar (Firebase Modular - Perbaikan Utama)
+  const handleCommentSubmit = async (postId: string, commentText: string) => {
+    if (!commentText.trim() || !user?.id) return;
+
+    const commentsRef = ref(rtdb, `posts/${postId}/comments`);
+    const newCommentRef = push(commentsRef);
+    const newComment: Comment = {
+      id: newCommentRef.key!,
+      author: user.name || 'Anonymous',
+      authorId: user.id,
+      text: commentText.trim(),
+      timestamp: serverTimestamp() as unknown as string,
+    };
+
+    await set(newCommentRef, newComment); // ✅ Ini yang benar di Firebase Modular
+
     const input = document.getElementById(`comment-input-${postId}`) as HTMLInputElement | null;
     if (input) input.value = '';
   };
@@ -169,7 +214,7 @@ const toggleShare = (postId: string) => {
     if (!post) return;
     const url = `${window.location.origin}/forum#${postId}`;
     const text = `Lihat di Angkasa: ${post.title || 'Postingan menarik'}\n"${post.content.substring(0, 80)}..."`;
-    window.open(`https://wa.me/?text=  ${encodeURIComponent(text + '\n\n' + url)}`, '_blank');
+    window.open(`https://wa.me/?text=${encodeURIComponent(text + '\n\n' + url)}`, '_blank');
   };
 
   const copyLink = (postId: string) => {
@@ -177,7 +222,6 @@ const toggleShare = (postId: string) => {
     navigator.clipboard.writeText(url).catch(console.error);
   };
 
-  // Fungsi untuk menghitung waktu relatif (X jam/menit/hari yang lalu)
   const getRelativeTime = (timestamp: string): string => {
     const now = new Date();
     const past = new Date(timestamp);
@@ -187,15 +231,10 @@ const toggleShare = (postId: string) => {
     const diffHours = Math.floor(diffMins / 60);
     const diffDays = Math.floor(diffHours / 24);
 
-    if (diffDays > 0) {
-      return `${diffDays} hari yang lalu`;
-    } else if (diffHours > 0) {
-      return `${diffHours} jam yang lalu`;
-    } else if (diffMins > 0) {
-      return `${diffMins} menit yang lalu`;
-    } else {
-      return 'Baru saja';
-    }
+    if (diffDays > 0) return `${diffDays} hari yang lalu`;
+    if (diffHours > 0) return `${diffHours} jam yang lalu`;
+    if (diffMins > 0) return `${diffMins} menit yang lalu`;
+    return 'Baru saja';
   };
 
   const filteredPosts = useMemo(() => {
@@ -257,7 +296,6 @@ const toggleShare = (postId: string) => {
           {isSearchOpen && (
             <div className="absolute z-10 mt-2 w-full bg-slate-800/70 backdrop-blur-md border border-slate-600/40 rounded-xl shadow-xl overflow-hidden">
               <div className="p-4 space-y-4">
-                {/* Search Input */}
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                   <input
@@ -269,7 +307,6 @@ const toggleShare = (postId: string) => {
                   />
                 </div>
 
-                {/* Tipe */}
                 <div>
                   <label className="block text-xs text-slate-500 mb-1.5">Tipe</label>
                   <div className="relative">
@@ -286,7 +323,6 @@ const toggleShare = (postId: string) => {
                   </div>
                 </div>
 
-                {/* Jenis */}
                 <div>
                   <label className="block text-xs text-slate-500 mb-1.5">Jenis</label>
                   <div className="relative">
@@ -304,7 +340,6 @@ const toggleShare = (postId: string) => {
                   </div>
                 </div>
 
-                {/* Actions */}
                 <div className="flex gap-2 pt-2">
                   <button
                     onClick={() => {
@@ -401,7 +436,7 @@ const toggleShare = (postId: string) => {
                   </div>
                 </div>
 
-                <div className="p-5">
+                <div className="p-5 relative">
                   {post.title && <h3 className="text-xl font-bold text-slate-200 mb-2">{post.title}</h3>}
                   <p className="text-slate-300 mb-4">{post.content}</p>
 
@@ -423,7 +458,7 @@ const toggleShare = (postId: string) => {
                     </div>
                   )}
 
-                  {/* Deadline Badge di pojok kanan atas */}
+                  {/* Deadline Badge */}
                   <div className="absolute top-5 right-5 z-10">
                     <span className="px-2 py-1 bg-transparent text-slate-300 text-xs font-bold rounded-full border border-slate-700 flex items-center gap-1">
                       <Clock className="w-3 h-3" />
@@ -431,16 +466,17 @@ const toggleShare = (postId: string) => {
                     </span>
                   </div>
 
-                  {/* Actions - Satu Baris */}
+                  {/* Actions */}
                   <div className="flex items-center gap-4 pt-3 border-t border-slate-600/30 mb-5">
                     <button
                       onClick={() => handleLike(post.id)}
                       className="flex items-center gap-2 text-slate-400 hover:text-red-400 transition-colors group relative"
                       aria-label="Suka"
                     >
-                      <div id={`heart-${post.id}`} className="relative">
-                        <Heart className="w-5 h-5" />
-                      </div>
+                      <Heart
+                        className={`w-5 h-5 ${post.likedBy?.[user.id] ? 'fill-red-400 text-red-400' : ''}`}
+                        id={`heart-${post.id}`}
+                      />
                       <span className="text-sm">{post.likes}</span>
                     </button>
 
@@ -450,51 +486,51 @@ const toggleShare = (postId: string) => {
                       aria-label="Komentar"
                     >
                       <MessageCircle className="w-5 h-5" />
-                      <span className="text-sm">{post.comments.length}</span>
+                      <span className="text-sm">{Object.keys(post.comments || {}).length}</span>
                     </button>
 
                     <div className="relative">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation(); // mencegah klik menutup popup lain
-                        toggleShare(post.id);
-                      }}
-                      className="flex items-center gap-1.5 text-slate-400 hover:text-blue-400 transition-colors text-sm"
-                      aria-label="Bagikan"
-                    >
-                      <Share2 size={16} />
-                      Bagikan
-                    </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleShare(post.id);
+                        }}
+                        className="flex items-center gap-1.5 text-slate-400 hover:text-blue-400 transition-colors text-sm"
+                        aria-label="Bagikan"
+                      >
+                        <Share2 size={16} />
+                        Bagikan
+                      </button>
 
-                    {openShares.has(post.id) && (
-                      <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 z-50">
-                        <div className="bg-slate-800/90 backdrop-blur-md rounded-lg shadow-xl border border-slate-600/40 p-3 w-60">
-                          <p className="text-slate-400 text-xs font-medium mb-2 flex items-center gap-1">
-                            <LinkIcon className="w-3 h-3 text-slate-500" /> Salin Tautan
-                          </p>
-                          <button
-                            onClick={() => copyLink(post.id)}
-                            className="w-full flex items-center gap-2 px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-md text-left text-xs mb-2"
-                          >
-                            <Copy className="w-3 h-3 text-slate-400" />
-                            Salin URL
-                          </button>
-                          <p className="text-slate-400 text-xs font-medium mb-2 flex items-center gap-1">
-                            <MessageSquareIcon className="w-3 h-3 text-slate-500" /> Bagikan ke
-                          </p>
-                          <button
-                            onClick={() => shareToWhatsApp(post.id)}
-                            className="w-full flex items-center gap-2 px-3 py-2 bg-green-700/80 hover:bg-green-600 text-white rounded-md text-left text-xs"
-                          >
-                            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.967-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
-                            </svg>
-                            WhatsApp
-                          </button>
+                      {openShares.has(post.id) && (
+                        <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 z-50">
+                          <div className="bg-slate-800/90 backdrop-blur-md rounded-lg shadow-xl border border-slate-600/40 p-3 w-60">
+                            <p className="text-slate-400 text-xs font-medium mb-2 flex items-center gap-1">
+                              <LinkIcon className="w-3 h-3 text-slate-500" /> Salin Tautan
+                            </p>
+                            <button
+                              onClick={() => copyLink(post.id)}
+                              className="w-full flex items-center gap-2 px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-md text-left text-xs mb-2"
+                            >
+                              <Copy className="w-3 h-3 text-slate-400" />
+                              Salin URL
+                            </button>
+                            <p className="text-slate-400 text-xs font-medium mb-2 flex items-center gap-1">
+                              <MessageSquareIcon className="w-3 h-3 text-slate-500" /> Bagikan ke
+                            </p>
+                            <button
+                              onClick={() => shareToWhatsApp(post.id)}
+                              className="w-full flex items-center gap-2 px-3 py-2 bg-green-700/80 hover:bg-green-600 text-white rounded-md text-left text-xs"
+                            >
+                              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.967-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
+                              </svg>
+                              WhatsApp
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Komentar Section */}
@@ -531,10 +567,10 @@ const toggleShare = (postId: string) => {
                       </div>
 
                       <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
-                        {post.comments.length === 0 ? (
+                        {Object.keys(post.comments || {}).length === 0 ? (
                           <p className="text-slate-500 text-sm italic">Belum ada komentar.</p>
                         ) : (
-                          post.comments.map((comment) => (
+                          Object.values(post.comments || {}).map((comment) => (
                             <div key={comment.id} className="flex gap-3">
                               <div className="w-7 h-7 rounded-full bg-slate-700/40 flex items-center justify-center flex-shrink-0 mt-0.5">
                                 <span className="font-medium text-slate-300 text-xs">
@@ -544,7 +580,11 @@ const toggleShare = (postId: string) => {
                               <div className="flex-1 bg-slate-800/20 rounded-lg p-3">
                                 <p className="font-medium text-slate-200 text-sm">{comment.author}</p>
                                 <p className="text-slate-300 text-sm mt-1">{comment.text}</p>
-                                <p className="text-slate-500 text-xs mt-1">{comment.timestamp}</p>
+                                <p className="text-slate-500 text-xs mt-1">
+                                  {typeof comment.timestamp === 'string'
+                                    ? new Date(comment.timestamp).toLocaleString('id-ID')
+                                    : new Date(comment.timestamp).toLocaleString('id-ID')}
+                                </p>
                               </div>
                             </div>
                           ))
@@ -552,8 +592,6 @@ const toggleShare = (postId: string) => {
                       </div>
                     </div>
                   )}
-
-                  {/* Tombol "Link" dan "Bagikan" di bawah sudah digabung di atas */}
                 </div>
               </article>
             ))}

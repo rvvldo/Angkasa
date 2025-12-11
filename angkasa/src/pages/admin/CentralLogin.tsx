@@ -71,7 +71,7 @@ export default function CentralLogin() {
 
           <button
             type="submit"
-            className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold rounded-lg shadow-lg hover:shadow-blue-500/25 transition-all duration-200 transform hover:scale-[1.02]"
+            className="w-full py-3 px-4 bg-blue-600 hover:from-blue-500 hover:to-blue-500 text-white font-semibold rounded-lg shadow-lg hover:shadow-blue-500/25 transition-all duration-200 transform hover:scale-[1.02]"
           >
             Access Dashboard
           </button>

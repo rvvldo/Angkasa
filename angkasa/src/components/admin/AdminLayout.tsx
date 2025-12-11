@@ -8,7 +8,8 @@ import {
     Menu,
     X,
     AlertCircle,
-    BarChart3
+    BarChart3,
+    FileText
 } from 'lucide-react';
 import { useAuth } from '../AuthProvider';
 
@@ -32,6 +33,7 @@ export default function AdminLayout({ children, role }: AdminLayoutProps) {
     const centralItems: SidebarItem[] = [
         { icon: BarChart3, label: 'Performa & Pengaturan', path: '/admin/central' },
         { icon: Users, label: 'Pengguna', path: '/admin/central/users' },
+        { icon: FileText, label: 'Manajemen Postingan', path: '/admin/central/posts' },
         { icon: AlertCircle, label: 'Laporan Masalah', path: '/admin/central/reports' },
     ];
 

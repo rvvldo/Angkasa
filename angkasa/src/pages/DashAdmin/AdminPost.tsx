@@ -518,6 +518,7 @@ const AdminPost: React.FC = () => {
       await set(newPostRef, {
         id: postId,
         author: currentUser.displayName || currentUser.email?.split('@')[0] || 'Admin',
+        authorId: currentUser.uid,
         avatar: '',
         content: data.description,
         image: data.imageUrl,
