@@ -25,7 +25,7 @@ interface Comment {
   authorId: string;
   text: string;
   timestamp: string | number;
-  parentId?: string; // 🔥 baris baru
+  parentId?: string; // 🔥 tetap ada untuk struktur, tapi tidak dipakai di forum
 }
 
 interface Post {
@@ -177,7 +177,7 @@ export default function ForumFeed({
     });
   };
 
-  // ✅ Kirim komentar utama
+  // ✅ Kirim komentar utama (peserta hanya bisa ini)
   const handleCommentSubmit = async (postId: string, commentText: string) => {
     if (!commentText.trim() || !user?.id) return;
 
@@ -193,25 +193,6 @@ export default function ForumFeed({
     });
 
     const input = document.getElementById(`comment-input-${postId}`) as HTMLInputElement | null;
-    if (input) input.value = '';
-  };
-
-  // ✅ Kirim balasan ke komentar tertentu
-  const handleReplySubmit = async (postId: string, replyText: string, parentId: string) => {
-    if (!replyText.trim() || !user?.id) return;
-
-    const commentsRef = ref(rtdb, `posts/${postId}/comments`);
-    const newCommentRef = push(commentsRef);
-    await set(newCommentRef, {
-      id: newCommentRef.key!,
-      author: user.name || 'Anonymous',
-      authorId: user.id,
-      text: replyText.trim(),
-      timestamp: serverTimestamp() as unknown as string,
-      parentId, // 🔥
-    });
-
-    const input = document.getElementById(`reply-input-${postId}-${parentId}`) as HTMLInputElement | null;
     if (input) input.value = '';
   };
 
@@ -410,16 +391,8 @@ export default function ForumFeed({
         ) : (
           <div className="space-y-8">
             {filteredPosts.map((post) => {
-              // 🔥 Kelompokkan komentar
-              const allComments = Object.values(post.comments || {});
-              const topLevel = allComments.filter(c => !c.parentId);
-              const replies: Record<string, Comment[]> = {};
-              allComments.forEach(c => {
-                if (c.parentId) {
-                  if (!replies[c.parentId]) replies[c.parentId] = [];
-                  replies[c.parentId].push(c);
-                }
-              });
+              // Hanya tampilkan komentar utama (tanpa balasan)
+              const topLevelComments = Object.values(post.comments || {}).filter(c => !c.parentId);
 
               return (
                 <article
@@ -499,7 +472,7 @@ export default function ForumFeed({
                         aria-label="Komentar"
                       >
                         <MessageCircle className="w-5 h-5" />
-                        <span className="text-sm">{allComments.length}</span>
+                        <span className="text-sm">{topLevelComments.length}</span>
                       </button>
 
                       <div className="relative">
@@ -546,7 +519,7 @@ export default function ForumFeed({
                       </div>
                     </div>
 
-                    {/* Komentar Section */}
+                    {/* Komentar Section - HANYA KOMENTAR UTAMA */}
                     {openComments.has(post.id) && (
                       <div className="pt-4 border-t border-slate-600/30 mt-4">
                         <div className="flex gap-2 mb-4">
@@ -579,11 +552,11 @@ export default function ForumFeed({
                           </button>
                         </div>
 
-                        <div className="space-y-4 max-h-80 overflow-y-auto pr-1">
-                          {topLevel.length === 0 ? (
+                        <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
+                          {topLevelComments.length === 0 ? (
                             <p className="text-slate-500 text-sm italic">Belum ada komentar.</p>
                           ) : (
-                            topLevel.map((comment) => (
+                            topLevelComments.map((comment) => (
                               <div key={comment.id} className="flex gap-3">
                                 <div className="w-7 h-7 rounded-full bg-slate-700/40 flex items-center justify-center flex-shrink-0 mt-0.5">
                                   <span className="font-medium text-slate-300 text-xs">
@@ -598,49 +571,6 @@ export default function ForumFeed({
                                       ? new Date(comment.timestamp).toLocaleString('id-ID')
                                       : 'Waktu tidak valid'}
                                   </p>
-
-                                  {/* Tombol Balas */}
-                                  <button
-                                    onClick={() => {
-                                      const input = document.getElementById(`reply-input-${post.id}-${comment.id}`) as HTMLInputElement | null;
-                                      if (input) input.focus();
-                                    }}
-                                    className="text-xs text-blue-400 hover:text-blue-300 mt-2"
-                                  >
-                                    Balas
-                                  </button>
-
-                                  {/* Input Balas */}
-                                  <div className="mt-2">
-                                    <input
-                                      id={`reply-input-${post.id}-${comment.id}`}
-                                      type="text"
-                                      placeholder="Balas komentar..."
-                                      onKeyDown={(e) => {
-                                        if (e.key === 'Enter') {
-                                          const input = e.target as HTMLInputElement;
-                                          handleReplySubmit(post.id, input.value, comment.id);
-                                          input.value = '';
-                                        }
-                                      }}
-                                      className="w-full px-3 py-1.5 bg-slate-900/40 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500 text-sm"
-                                    />
-                                  </div>
-
-                                  {/* Balasan */}
-                                  {replies[comment.id]?.map((reply) => (
-                                    <div key={reply.id} className="mt-2 pl-4 border-l-2 border-slate-600/30">
-                                      <div className="flex items-center gap-2">
-                                        <span className="font-medium text-slate-200 text-sm">{reply.author}</span>
-                                        <span className="text-slate-500 text-xs">
-                                          {typeof reply.timestamp === 'string'
-                                            ? new Date(reply.timestamp).toLocaleString('id-ID')
-                                            : '--'}
-                                        </span>
-                                      </div>
-                                      <p className="text-slate-300 text-sm mt-1">{reply.text}</p>
-                                    </div>
-                                  ))}
                                 </div>
                               </div>
                             ))
