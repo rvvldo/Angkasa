@@ -1,5 +1,5 @@
 // src/components/admin/AdminPost.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Plus,
   Trash2,
@@ -12,13 +12,16 @@ import {
   MoreVertical,
   X,
   Tag,
+  MessageCircle,
 } from 'lucide-react';
 import type { Post } from './AdminCommon';
 import { InputField, Modal } from './AdminCommon';
-import { ref, push, set, remove, onValue, update } from 'firebase/database';
+import { ref, push, set, remove, onValue, update, get, serverTimestamp } from 'firebase/database';
 import { auth, rtdb } from '../../firebase';
 
-// Component: Post Form
+// ======================
+// COMPONENT: Post Form
+// ======================
 const PostForm: React.FC<{
   onClose: () => void;
   postToEdit?: Post | null;
@@ -112,7 +115,6 @@ const PostForm: React.FC<{
         Icon={Image}
       />
 
-      {/* Tipe Postingan */}
       <div className="space-y-1">
         <label htmlFor="type" className="text-sm font-medium text-white flex items-center">
           <Tag size={16} className="mr-2 text-blue-400" />
@@ -144,7 +146,6 @@ const PostForm: React.FC<{
         </div>
       </div>
 
-      {/* Hashtag Input */}
       <div className="space-y-1">
         <label htmlFor="tagInput" className="text-sm font-medium text-white flex items-center">
           <Tag size={16} className="mr-2 text-blue-400" />
@@ -172,7 +173,6 @@ const PostForm: React.FC<{
         )}
       </div>
 
-      {/* Daftar Tag */}
       {tags.length > 0 && (
         <div className="flex flex-wrap gap-1.5 pt-2">
           {tags.map((tag, index) => (
@@ -240,7 +240,9 @@ const PostForm: React.FC<{
   );
 };
 
-// Full-Width Bottom Modal for Mobile Detail
+// ======================
+// COMPONENT: Post Detail Bottom Modal
+// ======================
 const PostDetailBottomModal: React.FC<{
   post: Post;
   onClose: () => void;
@@ -260,7 +262,7 @@ const PostDetailBottomModal: React.FC<{
   return (
     <div className="fixed inset-0 z-50 flex justify-center items-end">
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/50"
         onClick={onClose}
       ></div>
 
@@ -282,7 +284,6 @@ const PostDetailBottomModal: React.FC<{
               const target = e.target as HTMLImageElement;
               target.onerror = null;
               target.src = 'https://placehold.co/800x450/4C4CFF/FFFFFF?text=Gambar+Tidak+Tersedia';
-              target.alt = 'Gambar tidak dapat dimuat';
             }}
           />
         </div>
@@ -301,7 +302,6 @@ const PostDetailBottomModal: React.FC<{
           </div>
         </div>
 
-        {/* Tags */}
         {post.tags && post.tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mb-4">
             {post.tags.map((tag, i) => (
@@ -344,64 +344,166 @@ const PostDetailBottomModal: React.FC<{
   );
 };
 
-// Component: Post Card
+// ======================
+// COMPONENT: Comment Slide Panel with Per-Comment Reply
+// ======================
+const CommentSlidePanel: React.FC<{
+  post: Post;
+  onClose: () => void;
+  onReply: (text: string, parentId: string) => void;
+}> = ({ post, onClose, onReply }) => {
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState('');
+
+  const commentsArray = Object.values(post.comments || {}).sort(
+    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+  );
+
+  const handleSendReply = (parentId: string) => {
+    if (replyText.trim()) {
+      onReply(replyText.trim(), parentId);
+      setReplyText('');
+      setReplyingTo(null);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50">
+      <div
+        className="absolute inset-0 bg-black/50"
+        onClick={onClose}
+      ></div>
+
+      <div className="absolute right-0 top-0 w-full max-w-md h-full bg-gray-800 border-l border-slate-700 flex flex-col">
+        <div className="p-4 border-b border-slate-700 flex items-center justify-between">
+          <h3 className="text-white font-bold text-lg">Komentar ({commentsArray.length})</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-white">
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {commentsArray.length === 0 ? (
+            <p className="text-gray-500 text-center py-8">Belum ada komentar.</p>
+          ) : (
+            commentsArray.map((comment) => (
+              <div key={comment.id} className="bg-gray-700/30 p-3 rounded-lg">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-semibold text-blue-300 text-sm">{comment.author}</span>
+                  <span className="text-xs text-gray-500">
+                    {typeof comment.timestamp === 'string'
+                      ? new Date(comment.timestamp).toLocaleString('id-ID')
+                      : '--'}
+                  </span>
+                </div>
+                <p className="text-gray-200 text-sm mb-2">{comment.text}</p>
+
+                <button
+                  onClick={() => setReplyingTo(comment.id)}
+                  className="text-xs text-blue-400 hover:text-blue-300"
+                >
+                  Balas
+                </button>
+
+                {replyingTo === comment.id && (
+                  <div className="mt-2 flex gap-2">
+                    <input
+                      type="text"
+                      value={replyText}
+                      onChange={(e) => setReplyText(e.target.value)}
+                      placeholder="Tulis balasan..."
+                      className="flex-1 px-3 py-1.5 bg-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      onKeyDown={(e) => e.key === 'Enter' && handleSendReply(comment.id)}
+                    />
+                    <button
+                      onClick={() => handleSendReply(comment.id)}
+                      className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition"
+                    >
+                      Kirim
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ======================
+// COMPONENT: Post Card
+// ======================
 const PostCard: React.FC<{
   post: Post;
   onMoreClick: (post: Post) => void;
   onEdit?: (post: Post) => void;
   onDelete?: (id: string) => void;
-}> = ({ post, onMoreClick, onEdit, onDelete }) => {
+  onCommentClick?: (post: Post) => void;
+}> = ({ post, onMoreClick, onEdit, onDelete, onCommentClick }) => {
   const truncateText = (text: string, maxLength: number) => {
     return text.length > maxLength ? text.slice(0, maxLength) + '...' : text;
   };
 
   return (
     <>
-      <div className="sm:hidden bg-gray-800 border border-slate-700 rounded-xl p-1 flex flex-col space-y-2 hover:bg-gray-750 transition duration-200 relative">
+      {/* Mobile */}
+      <div className="sm:hidden bg-gray-800 border border-slate-700 rounded-xl p-2 flex flex-col space-y-2 hover:bg-gray-750 transition duration-200 relative">
         <div className="w-full flex-shrink-0">
           <img
             src={post.imageUrl}
             alt={`Gambar untuk ${post.title}`}
-            className="mx-auto h-20 object-cover rounded-lg border border-gray-700"
+            className="w-full h-24 object-cover rounded-lg border border-gray-700"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               target.onerror = null;
               target.src = 'https://placehold.co/800x450/4C4CFF/FFFFFF?text=Gambar+Tidak+Tersedia';
-              target.alt = 'Gambar tidak dapat dimuat';
             }}
           />
         </div>
-        <div className="flex-grow space-y-0.5 min-w-0">
-          <h3 className="text-sm font-bold text-blue-400 line-clamp-1 break-words">{post.title}</h3>
-          <p className="text-xs text-gray-300 line-clamp-2 break-words">
-            {truncateText(post.description, 30)}
-          </p>
-          {/* Tags */}
+        <div className="flex-grow space-y-1 min-w-0">
+          <h3 className="text-sm font-bold text-blue-400 line-clamp-1">{post.title}</h3>
+          <p className="text-xs text-gray-300 line-clamp-2">{truncateText(post.description, 40)}</p>
           {post.tags && post.tags.length > 0 && (
             <div className="flex flex-wrap gap-1">
               {post.tags.slice(0, 2).map((tag, i) => (
-                <span key={i} className="px-1 py-0.5 bg-slate-700/40 text-slate-300 text-xs rounded">
+                <span key={i} className="px-1.5 py-0.5 bg-slate-700/40 text-slate-300 text-xs rounded">
                   #{tag}
                 </span>
               ))}
               {post.tags.length > 2 && (
-                <span className="px-1 py-0.5 bg-slate-700/40 text-slate-300 text-xs rounded">
+                <span className="px-1.5 py-0.5 bg-slate-700/40 text-slate-300 text-xs rounded">
                   +{post.tags.length - 2}
                 </span>
               )}
             </div>
           )}
+          <div className="text-xs text-gray-400 flex items-center">
+            <MessageCircle size={12} className="mr-1" />
+            {post.commentCount || 0}
+          </div>
         </div>
-        <button
-          onClick={() => onMoreClick(post)}
-          className="absolute bottom-1 right-1 p-0.5 bg-gray-700/80 rounded-full text-white hover:bg-gray-600 transition shadow-sm"
-          aria-label="Lihat detail"
-        >
-          <MoreVertical size={12} />
-        </button>
+        <div className="absolute bottom-2 right-2 flex space-x-1">
+          <button
+            onClick={() => onCommentClick?.(post)}
+            className="p-1 bg-slate-700 rounded text-white hover:bg-slate-600"
+            aria-label="Komentar"
+          >
+            <MessageCircle size={12} />
+          </button>
+          <button
+            onClick={() => onMoreClick(post)}
+            className="p-1 bg-gray-700 rounded text-white hover:bg-gray-600"
+            aria-label="Lainnya"
+          >
+            <MoreVertical size={12} />
+          </button>
+        </div>
       </div>
 
-      <div className="hidden sm:block bg-gray-800 border border-slate-700 rounded-xl p-4 flex flex-col space-y-3 hover:shadow-lg hover:shadow-blue-900/30 transition duration-300 h-full relative">
+      {/* Desktop */}
+      <div className="hidden sm:block bg-gray-800 border border-slate-700 rounded-xl p-4 flex flex-col space-y-3 hover:shadow-lg hover:shadow-blue-900/30 transition h-full relative">
         <div className="w-full flex-shrink-0">
           <img
             src={post.imageUrl}
@@ -411,14 +513,12 @@ const PostCard: React.FC<{
               const target = e.target as HTMLImageElement;
               target.onerror = null;
               target.src = 'https://placehold.co/800x450/4C4CFF/FFFFFF?text=Gambar+Tidak+Tersedia';
-              target.alt = 'Gambar tidak dapat dimuat';
             }}
           />
         </div>
         <div className="flex-grow space-y-2">
           <h3 className="text-lg font-bold text-blue-400 line-clamp-1">{post.title}</h3>
           <p className="text-sm text-gray-300 line-clamp-2">{post.description}</p>
-          {/* Tags */}
           {post.tags && post.tags.length > 0 && (
             <div className="flex flex-wrap gap-1">
               {post.tags.map((tag, i) => (
@@ -444,18 +544,28 @@ const PostCard: React.FC<{
           >
             <LinkIcon size={12} className="mr-1" /> Link Pendaftaran
           </a>
+          <div className="text-xs text-gray-400 flex items-center mt-1">
+            <MessageCircle size={12} className="mr-1" />
+            {post.commentCount || 0} komentar
+          </div>
+          <button
+            onClick={() => onCommentClick?.(post)}
+            className="w-full py-1.5 mt-1 bg-slate-700/50 text-slate-300 text-xs rounded hover:bg-slate-600 transition"
+          >
+            Lihat & Balas Komentar
+          </button>
         </div>
         <div className="absolute bottom-2 right-2 flex space-x-1 z-10">
           <button
             onClick={() => onEdit?.(post)}
-            className="p-1.5 bg-blue-600/80 rounded-full text-white hover:bg-blue-500 transition shadow-sm"
+            className="p-1.5 bg-blue-600/80 rounded-full text-white hover:bg-blue-500"
             aria-label="Edit"
           >
             <Edit size={14} />
           </button>
           <button
             onClick={() => onDelete?.(post.id)}
-            className="p-1.5 bg-red-600/80 rounded-full text-white hover:bg-red-500 transition shadow-sm"
+            className="p-1.5 bg-red-600/80 rounded-full text-white hover:bg-red-500"
             aria-label="Hapus"
           >
             <Trash2 size={14} />
@@ -466,201 +576,204 @@ const PostCard: React.FC<{
   );
 };
 
-// Component: AdminPost — Versi Akhir
+// ======================
+// MAIN: AdminPost
+// ======================
 const AdminPost: React.FC = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [postToEdit, setPostToEdit] = useState<Post | null>(null);
   const [selectedPostForDetail, setSelectedPostForDetail] = useState<Post | null>(null);
+  const [selectedPostForComments, setSelectedPostForComments] = useState<Post | null>(null);
 
-  useEffect(() => {
+  const loadPosts = useCallback(async () => {
     const currentUser = auth.currentUser;
     if (!currentUser) {
+      setPosts([]);
       setLoading(false);
       return;
     }
 
-    const postsRef = ref(rtdb, `admins/${currentUser.uid}/posts`);
-    const unsubscribe = onValue(postsRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const data = snapshot.val();
-        const postsArray: Post[] = Object.keys(data).map((key) => ({
-          id: key,
-          ...data[key],
-          eventDate: new Date(data[key].eventDate),
-          closingDate: new Date(data[key].closingDate),
-          createdAt: new Date(data[key].createdAt),
-        }));
-        postsArray.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-        setPosts(postsArray);
-      } else {
+    const adminPostsRef = ref(rtdb, `admins/${currentUser.uid}/posts`);
+    const unsubscribe = onValue(adminPostsRef, async (snapshot) => {
+      if (!snapshot.exists()) {
         setPosts([]);
+        setLoading(false);
+        return;
       }
+
+      const adminData = snapshot.val();
+      const postIds = Object.keys(adminData);
+
+      const fullPosts = await Promise.all(
+        postIds.map(async (id) => {
+          const globalSnap = await get(ref(rtdb, `posts/${id}`));
+          const globalData = globalSnap.exists() ? globalSnap.val() : {};
+
+          return {
+            id,
+            ...adminData[id],
+            commentCount: Object.keys(globalData.comments || {}).length,
+            comments: globalData.comments || {},
+            eventDate: new Date(adminData[id].eventDate),
+            closingDate: new Date(adminData[id].closingDate),
+            createdAt: new Date(adminData[id].createdAt),
+          };
+        })
+      );
+
+      fullPosts.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+      setPosts(fullPosts);
       setLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
 
-  // 🔥 TAMBAH POSTINGAN → GUNAKAN SATU ID UNTUK KEDUA TEMPAT
+  useEffect(() => {
+    loadPosts();
+  }, [loadPosts]);
+
+  // 🔥 Balas per komentar
+  const handleReplyToComment = async (postId: string, replyText: string, parentId: string) => {
+    const currentUser = auth.currentUser;
+    if (!currentUser) return;
+
+    const commentsRef = ref(rtdb, `posts/${postId}/comments`);
+    const newCommentRef = push(commentsRef);
+    await set(newCommentRef, {
+      id: newCommentRef.key!,
+      author: currentUser.displayName || 'Admin',
+      authorId: currentUser.uid,
+      text: replyText,
+      timestamp: serverTimestamp() as unknown as string,
+      parentId, // 🔥 penting!
+    });
+  };
+
   const handleAddPost = async (data: Omit<Post, 'id' | 'createdAt'>) => {
     const currentUser = auth.currentUser;
     if (!currentUser) return;
 
     try {
-      // 🔥 Buat ID sekali di path global
       const globalPostsRef = ref(rtdb, 'posts');
       const newPostRef = push(globalPostsRef);
       const postId = newPostRef.key!;
 
-      // 1. Simpan ke path global (forum)
       await set(newPostRef, {
         id: postId,
-        author: currentUser.displayName || currentUser.email?.split('@')[0] || 'Admin',
+        author: currentUser.displayName || 'Admin',
         authorId: currentUser.uid,
         avatar: '',
+        title: data.title,
         content: data.description,
         image: data.imageUrl,
-        likes: 0,
-        comments: [],
-        timestamp: new Date().toISOString(),
-        category: data.type === 'lomba' ? 'lomba' : 'beasiswa',
-        title: data.title,
         type: data.type,
+        category: data.type === 'lomba' ? 'lomba' : 'beasiswa',
         tags: data.tags || [],
         registrationLink: data.registrationLink,
         eventDate: data.eventDate.toISOString(),
         closingDate: data.closingDate.toISOString(),
+        timestamp: new Date().toISOString(),
+        likes: 0,
+        likedBy: {},
+        comments: {},
       });
 
-      // 2. Simpan ke folder admin — dengan ID yang sama
       await set(ref(rtdb, `admins/${currentUser.uid}/posts/${postId}`), {
         ...data,
         createdAt: new Date().toISOString(),
         eventDate: data.eventDate.toISOString(),
         closingDate: data.closingDate.toISOString(),
       });
-
     } catch (error) {
-      console.error('Error adding post:', error);
-      alert('Gagal menambahkan postingan. Coba lagi.');
+      console.error('Error:', error);
+      alert('Gagal menambahkan postingan.');
     }
   };
 
-  // 🔥 UPDATE → GUNAKAN ID YANG SAMA
   const handleUpdatePost = async (data: Omit<Post, 'id' | 'createdAt'>) => {
     if (!postToEdit) return;
-
     try {
       await update(ref(rtdb, `admins/${auth.currentUser?.uid}/posts/${postToEdit.id}`), {
         ...data,
         eventDate: data.eventDate.toISOString(),
         closingDate: data.closingDate.toISOString(),
       });
-
       await update(ref(rtdb, `posts/${postToEdit.id}`), {
         title: data.title,
-        description: data.description,
-        imageUrl: data.imageUrl,
+        content: data.description,
+        image: data.imageUrl,
         eventDate: data.eventDate.toISOString(),
         closingDate: data.closingDate.toISOString(),
         registrationLink: data.registrationLink,
         type: data.type,
         tags: data.tags || [],
+        category: data.type === 'lomba' ? 'lomba' : 'beasiswa',
       });
-
     } catch (error) {
-      console.error('Error updating post:', error);
-      alert('Gagal memperbarui postingan. Coba lagi.');
+      console.error('Error update:', error);
+      alert('Gagal memperbarui postingan.');
     }
   };
 
-  // 🔥 HAPUS → GUNAKAN ID YANG SAMA
   const handleDeletePost = async (id: string) => {
     try {
       await remove(ref(rtdb, `admins/${auth.currentUser?.uid}/posts/${id}`));
       await remove(ref(rtdb, `posts/${id}`));
     } catch (error) {
-      console.error('Error deleting post:', error);
-      alert('Gagal menghapus postingan. Coba lagi.');
+      console.error('Error delete:', error);
+      alert('Gagal menghapus postingan.');
     }
-  };
-
-  const handleAddClick = () => {
-    setPostToEdit(null);
-    setIsModalOpen(true);
-  };
-
-  const handleEditClick = (post: Post) => {
-    setPostToEdit(post);
-    setIsModalOpen(true);
-  };
-
-  const handleMoreClick = (post: Post) => {
-    setSelectedPostForDetail(post);
-  };
-
-  const closeDetailModal = () => {
-    setSelectedPostForDetail(null);
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen text-white">
-        Memuat data postingan...
+        Memuat data...
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 relative min-h-screen pb-24">
-      <h1 className="md:text-3xl font-extrabold text-white border-b border-slate-700 pb-3">
+    <div className="space-y-6 relative min-h-screen pb-24 p-4 sm:p-6">
+      <h1 className="text-2xl md:text-3xl font-extrabold text-white border-b border-slate-700 pb-3">
         Daftar Postingan ({posts.length})
       </h1>
 
       {posts.length === 0 ? (
-        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-4">
-          <p className="text-xl text-gray-400 mb-6">Belum ada Postingan yang dibuat.</p>
+        <div className="text-center py-12">
+          <p className="text-gray-400 mb-6">Belum ada postingan.</p>
           <button
-            onClick={handleAddClick}
-            className="p-1 bg-blue-600 rounded-full text-white shadow-xl hover:bg-blue-500 transition transform hover:scale-110 active:scale-95 focus:outline-none focus:ring-4 focus:ring-blue-400 animate-pulse-slow"
-            aria-label="Tambah Postingan Pertama"
+            onClick={() => setIsModalOpen(true)}
+            className="p-3 bg-blue-600 rounded-full text-white shadow-lg hover:bg-blue-500 transition"
+            aria-label="Tambah Postingan"
           >
-            <Plus size={36} />
+            <Plus size={24} />
           </button>
-          <p className="text-sm text-gray-500 mt-4">Klik untuk membuat Postingan pertama Anda</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 px-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {posts.map((post) => (
             <div key={post.id} className="col-span-1">
               <PostCard
                 post={post}
-                onMoreClick={handleMoreClick}
-                onEdit={handleEditClick}
+                onMoreClick={setSelectedPostForDetail}
+                onEdit={setPostToEdit}
                 onDelete={handleDeletePost}
+                onCommentClick={setSelectedPostForComments}
               />
             </div>
           ))}
         </div>
       )}
 
-      {/* Floating Button */}
-      <div className="fixed sm:hidden bottom-5 right-4 z-10">
+      {/* Floating Button — hanya di mobile */}
+      <div className="fixed sm:hidden bottom-6 right-6 z-10">
         <button
-          onClick={handleAddClick}
-          className="p-3 bg-blue-600 rounded-full text-white shadow-xl hover:bg-blue-500 transition transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-blue-400"
-          aria-label="Tambah Postingan"
-        >
-          <Plus size={24} />
-        </button>
-      </div>
-
-      <div className="fixed hidden sm:block bottom-6 right-6 z-10">
-        <button
-          onClick={handleAddClick}
-          className="p-4 bg-blue-600 rounded-full text-white shadow-lg hover:bg-blue-500 transition transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-blue-400"
+          onClick={() => setIsModalOpen(true)}
+          className="p-4 bg-blue-600 rounded-full text-white shadow-lg hover:bg-blue-500 transition"
           aria-label="Tambah Postingan"
         >
           <Plus size={24} />
@@ -672,7 +785,7 @@ const AdminPost: React.FC = () => {
         onClose={() => setIsModalOpen(false)}
         title={postToEdit ? 'Edit Postingan' : 'Tambah Postingan Baru'}
       >
-        <div className="max-h-[80vh] overflow-y-auto pb-6">
+        <div className="max-h-[80vh] overflow-y-auto p-2">
           <PostForm
             onClose={() => setIsModalOpen(false)}
             postToEdit={postToEdit}
@@ -684,19 +797,19 @@ const AdminPost: React.FC = () => {
       {selectedPostForDetail && (
         <PostDetailBottomModal
           post={selectedPostForDetail}
-          onClose={closeDetailModal}
-          onEdit={handleEditClick}
+          onClose={() => setSelectedPostForDetail(null)}
+          onEdit={setPostToEdit}
           onDelete={handleDeletePost}
         />
       )}
 
-      <style>{`
-        @keyframes pulse-slow {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(85, 109, 247, 0.4); }
-        }
-        .animate-pulse-slow { animation: pulse-slow 3s infinite; }
-      `}</style>
+      {selectedPostForComments && (
+        <CommentSlidePanel
+          post={selectedPostForComments}
+          onClose={() => setSelectedPostForComments(null)}
+          onReply={handleReplyToComment}
+        />
+      )}
     </div>
   );
 };

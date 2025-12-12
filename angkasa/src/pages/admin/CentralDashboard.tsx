@@ -218,20 +218,7 @@ export default function CentralDashboard() {
                                     >
                                         <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${maintenance.dashAdmin ? 'left-6' : 'left-1'}`}></div>
                                     </button>
-                                </div>
-
-                                <div className="flex items-center justify-between p-4 bg-slate-700/30 rounded-lg">
-                                    <div>
-                                        <h3 className="text-white font-medium">Admin Central Maintenance</h3>
-                                        <p className="text-sm text-slate-400">Tutup panel ini (Admin Central)</p>
-                                    </div>
-                                    <button 
-                                        onClick={() => toggleMaintenance('adminCentral')}
-                                        className={`w-11 h-6 rounded-full relative transition-colors ${maintenance.adminCentral ? 'bg-blue-600' : 'bg-slate-600'}`}
-                                    >
-                                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${maintenance.adminCentral ? 'left-6' : 'left-1'}`}></div>
-                                    </button>
-                                </div>
+                                </div>          
                             </div>
 
                             {/* Registration Settings */}
