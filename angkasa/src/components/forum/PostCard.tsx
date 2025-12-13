@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Heart, MessageCircle, Share2, Send, Trophy, GraduationCap, Copy, MessageSquareIcon, Clock } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Send, Trophy, GraduationCap, Copy, MessageSquareIcon, Clock, Link } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Types (reused from ForumFeed)
@@ -114,14 +114,14 @@ export default function PostCard({ post, currentUser, onLike, onCommentSubmit, o
             </p>
           </div>
         </div>
-        
+
         {/* Registration Deadline Badge */}
-         <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-900/50 rounded-full border border-slate-700/50">
-           <Clock size={12} className="text-slate-400" />
-           <span className="text-xs font-medium text-slate-300">
-             {new Date(post.closingDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
-           </span>
-         </div>
+        <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-900/50 rounded-full border border-slate-700/50">
+          <Clock size={12} className="text-slate-400" />
+          <span className="text-xs font-medium text-slate-300">
+            {new Date(post.closingDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+          </span>
+        </div>
       </div>
 
       {/* Content */}
@@ -149,7 +149,10 @@ export default function PostCard({ post, currentUser, onLike, onCommentSubmit, o
         {/* Tags */}
         <div className="flex flex-wrap gap-2 mb-4">
           {post.tags.map((tag, i) => (
-            <span key={i} className="text-xs text-blue-400 hover:text-blue-300 cursor-pointer">
+            <span
+              key={i}
+              className="px-2.5 py-1 rounded-full border border-slate-700/50 hover:border-slate-500 bg-transparent hover:bg-slate-800/30 text-xs font-medium text-slate-400 hover:text-slate-200 transition-all duration-200 cursor-pointer"
+            >
               #{tag}
             </span>
           ))}
@@ -161,16 +164,14 @@ export default function PostCard({ post, currentUser, onLike, onCommentSubmit, o
         <div className="flex items-center gap-4">
           <button
             onClick={() => onLike(post.id)}
-            className={`flex items-center gap-2 text-sm transition-colors ${
-              post.likedBy?.[currentUser?.id] 
-                ? 'text-pink-500' 
-                : 'text-slate-400 hover:text-pink-400'
-            }`}
+            className={`flex items-center gap-2 text-sm transition-colors ${post.likedBy?.[currentUser?.id]
+              ? 'text-pink-500'
+              : 'text-slate-400 hover:text-pink-400'
+              }`}
           >
             <Heart
-              className={`w-5 h-5 transition-transform active:scale-95 ${
-                post.likedBy?.[currentUser?.id] ? 'fill-current' : ''
-              }`}
+              className={`w-5 h-5 transition-transform active:scale-95 ${post.likedBy?.[currentUser?.id] ? 'fill-current' : ''
+                }`}
             />
             <span className="font-medium">{post.likes || 0}</span>
           </button>
@@ -182,6 +183,18 @@ export default function PostCard({ post, currentUser, onLike, onCommentSubmit, o
             <MessageCircle className="w-5 h-5" />
             <span className="font-medium">{allComments.length}</span>
           </button>
+
+          {post.registrationLink && post.registrationLink !== '#' && (
+            <a
+              href={post.registrationLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-sm text-slate-400 hover:text-blue-400 transition-colors"
+              title={`Link ${post.type === 'lomba' ? 'Lomba' : 'Beasiswa'}`}
+            >
+              <Link className="w-5 h-5" />
+            </a>
+          )}
         </div>
 
         <div className="relative">
@@ -191,7 +204,7 @@ export default function PostCard({ post, currentUser, onLike, onCommentSubmit, o
           >
             <Share2 className="w-5 h-5" />
           </button>
-          
+
           <AnimatePresence>
             {isShareOpen && (
               <motion.div
@@ -226,26 +239,26 @@ export default function PostCard({ post, currentUser, onLike, onCommentSubmit, o
             <div className="p-4 space-y-4">
               {/* Comment Input */}
               <div className="flex gap-3">
-                 <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-300">
-                    {currentUser?.name?.charAt(0) || 'U'}
-                 </div>
-                 <div className="flex-1 relative">
-                   <input
-                     type="text"
-                     value={commentText}
-                     onChange={(e) => setCommentText(e.target.value)}
-                     onKeyDown={(e) => e.key === 'Enter' && (onCommentSubmit(post.id, commentText), setCommentText(''))}
-                     placeholder="Tulis komentar..."
-                     className="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 placeholder-slate-500"
-                   />
-                   <button 
-                     onClick={() => { onCommentSubmit(post.id, commentText); setCommentText(''); }}
-                     className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
-                     disabled={!commentText.trim()}
-                   >
-                     <Send size={14} />
-                   </button>
-                 </div>
+                <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-300">
+                  {currentUser?.name?.charAt(0) || 'U'}
+                </div>
+                <div className="flex-1 relative">
+                  <input
+                    type="text"
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && (onCommentSubmit(post.id, commentText), setCommentText(''))}
+                    placeholder="Tulis komentar..."
+                    className="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 placeholder-slate-500"
+                  />
+                  <button
+                    onClick={() => { onCommentSubmit(post.id, commentText); setCommentText(''); }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
+                    disabled={!commentText.trim()}
+                  >
+                    <Send size={14} />
+                  </button>
+                </div>
               </div>
 
               {/* Comments List */}
@@ -260,58 +273,58 @@ export default function PostCard({ post, currentUser, onLike, onCommentSubmit, o
                           {comment.author.charAt(0)}
                         </div>
                         <div className="flex-1">
-                           <div className="bg-slate-800/40 rounded-2xl rounded-tl-none px-4 py-2 border border-slate-700/30">
-                              <div className="flex items-baseline justify-between">
-                                <span className="text-xs font-bold text-slate-300">{comment.author}</span>
-                                <span className="text-[10px] text-slate-600">
-                                  {typeof comment.timestamp === 'string' ? new Date(comment.timestamp).toLocaleDateString() : ''}
-                                </span>
+                          <div className="bg-slate-800/40 rounded-2xl rounded-tl-none px-4 py-2 border border-slate-700/30">
+                            <div className="flex items-baseline justify-between">
+                              <span className="text-xs font-bold text-slate-300">{comment.author}</span>
+                              <span className="text-[10px] text-slate-600">
+                                {typeof comment.timestamp === 'string' ? new Date(comment.timestamp).toLocaleDateString() : ''}
+                              </span>
+                            </div>
+                            <p className="text-sm text-slate-300 mt-0.5">{comment.text}</p>
+                          </div>
+
+                          <div className="flex items-center gap-3 mt-1 ml-2">
+                            <button
+                              onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
+                              className="text-xs text-slate-500 hover:text-blue-400 font-medium"
+                            >
+                              Balas
+                            </button>
+                          </div>
+
+                          {/* Reply Input */}
+                          {replyingTo === comment.id && (
+                            <div className="mt-2 flex gap-2 animate-in fade-in slide-in-from-top-1">
+                              <input
+                                type="text"
+                                placeholder={`Balas ${comment.author}...`}
+                                className="flex-1 bg-slate-800/30 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500/50"
+                                autoFocus
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    const val = (e.target as HTMLInputElement).value;
+                                    onReplySubmit(post.id, val, comment.id);
+                                    setReplyingTo(null);
+                                  }
+                                }}
+                              />
+                            </div>
+                          )}
+
+                          {/* Replies */}
+                          {replies[comment.id]?.map(reply => (
+                            <div key={reply.id} className="mt-2 ml-2 flex gap-3 pl-3 border-l-2 border-slate-700/30">
+                              <div className="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-400 mt-1">
+                                {reply.author.charAt(0)}
                               </div>
-                              <p className="text-sm text-slate-300 mt-0.5">{comment.text}</p>
-                           </div>
-                           
-                           <div className="flex items-center gap-3 mt-1 ml-2">
-                             <button 
-                               onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
-                               className="text-xs text-slate-500 hover:text-blue-400 font-medium"
-                             >
-                               Balas
-                             </button>
-                           </div>
-
-                           {/* Reply Input */}
-                           {replyingTo === comment.id && (
-                             <div className="mt-2 flex gap-2 animate-in fade-in slide-in-from-top-1">
-                               <input
-                                  type="text"
-                                  placeholder={`Balas ${comment.author}...`}
-                                  className="flex-1 bg-slate-800/30 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500/50"
-                                  autoFocus
-                                  onKeyDown={(e) => {
-                                      if (e.key === 'Enter') {
-                                        const val = (e.target as HTMLInputElement).value;
-                                        onReplySubmit(post.id, val, comment.id);
-                                        setReplyingTo(null);
-                                      }
-                                  }}
-                               />
-                             </div>
-                           )}
-
-                           {/* Replies */}
-                           {replies[comment.id]?.map(reply => (
-                             <div key={reply.id} className="mt-2 ml-2 flex gap-3 pl-3 border-l-2 border-slate-700/30">
-                               <div className="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-400 mt-1">
-                                  {reply.author.charAt(0)}
-                               </div>
-                               <div>
-                                  <div className="bg-slate-800/30 rounded-xl rounded-tl-none px-3 py-2 border border-slate-700/20">
-                                    <span className="text-xs font-bold text-slate-400 block">{reply.author}</span>
-                                    <p className="text-xs text-slate-300">{reply.text}</p>
-                                  </div>
-                               </div>
-                             </div>
-                           ))}
+                              <div>
+                                <div className="bg-slate-800/30 rounded-xl rounded-tl-none px-3 py-2 border border-slate-700/20">
+                                  <span className="text-xs font-bold text-slate-400 block">{reply.author}</span>
+                                  <p className="text-xs text-slate-300">{reply.text}</p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     </div>

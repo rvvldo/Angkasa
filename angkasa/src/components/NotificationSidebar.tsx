@@ -1,7 +1,7 @@
 // src/components/NotificationSidebar.tsx
 import { X, Bell, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { ref, onValue, set, remove } from "firebase/database";
+import { ref, onValue, update } from "firebase/database";
 import { auth } from "../firebase";
 import { rtdb } from "../firebase";
 
@@ -68,57 +68,83 @@ const NotificationDetailModal: React.FC<{
   const adminName = sentBy.displayName || sentBy.email?.split("@")[0] || "Admin";
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
-      <div className="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl w-full max-w-md mx-auto">
-        <div className="flex justify-between items-center p-4 border-b border-slate-700">
-          <h2 className="text-lg font-bold text-white">Detail Notifikasi</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white">
+    <div className="fixed inset-0 z-[999] flex items-end sm:items-center justify-center sm:p-4">
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+        onClick={onClose}
+      />
+
+      {/* Modal / Bottom Sheet Content */}
+      <div className="relative w-full sm:max-w-md bg-slate-900 border-t sm:border border-slate-700/50 rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden transform transition-all animate-in slide-in-from-bottom duration-300 flex flex-col max-h-[90vh]">
+
+        {/* Mobile Handle */}
+        <div className="sm:hidden w-full flex justify-center pt-3 pb-1 flex-shrink-0" onClick={onClose}>
+          <div className="w-12 h-1.5 bg-slate-700 rounded-full" />
+        </div>
+
+        <div className="flex justify-between items-center p-4 border-b border-slate-700/50 flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <h2 className="text-lg font-bold text-white">Detail Notifikasi</h2>
+            <span
+              className={`text-xs px-2.5 py-0.5 rounded-full border ${notification.type === "lomba"
+                ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                : "bg-blue-500/10 text-blue-400 border-blue-500/20"
+                }`}
+            >
+              {notification.type === "lomba" ? "Lomba" : "Beasiswa"}
+            </span>
+          </div>
+          <button onClick={onClose} className="p-1 text-gray-400 hover:text-white rounded-full hover:bg-slate-800 transition-colors">
             <X size={20} />
           </button>
         </div>
 
-        <div className="p-4 space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-blue-700 flex items-center justify-center text-white font-bold text-lg">
+        <div className="p-5 space-y-5 overflow-y-auto">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-blue-700 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-blue-900/20">
               {initials}
             </div>
             <div>
-              <p className="text-sm font-medium text-white">{adminName}</p>
-              <p className="text-xs text-gray-400">Mengirim notifikasi</p>
+              <p className="text-base font-semibold text-white">{adminName}</p>
+              <p className="text-sm text-slate-400">Mengirim notifikasi</p>
             </div>
           </div>
 
-          <h3 className="text-xl font-bold text-blue-400">{notification.title}</h3>
-          <p className="text-gray-300 whitespace-pre-line">{notification.message}</p>
+          <div>
+            <h3 className="text-xl font-bold text-blue-400 mb-2">{notification.title}</h3>
+            <p className="text-slate-300 whitespace-pre-line leading-relaxed text-sm sm:text-base">
+              {notification.message}
+            </p>
+          </div>
 
           {notification.badge && (
-            <div className="mt-3">
-              <span className="px-3 py-1 bg-blue-700/30 text-blue-300 text-sm font-medium rounded-full">
+            <div>
+              <span className="inline-flex px-3 py-1 bg-blue-500/10 text-blue-400 border border-blue-500/20 text-sm font-medium rounded-full">
                 {notification.badge}
               </span>
             </div>
           )}
 
-          <div className="flex justify-between text-xs text-gray-500 mt-4">
-            <span>{notification.type === "lomba" ? "🏆 Lomba" : "🎓 Beasiswa"}</span>
+          <div className="flex justify-between items-center text-xs sm:text-sm text-slate-500 pt-2 border-t border-slate-800">
             <span>{notification.formattedTime}</span>
           </div>
-        </div>
 
-        <div className="p-4 border-t border-slate-700 flex gap-2">
-          <button
-            onClick={onDelete}
-            className="flex-1 py-2 bg-red-600 text-white rounded-lg hover:bg-red-500 transition flex items-center justify-center gap-1"
-          >
-            <Trash2 size={16} />
-            Hapus
-          </button>
-          <button
-            onClick={onClose}
-            className="flex-1 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition"
-          >
-            Tutup
-          </button>
+          <div className="p-4 border-t border-slate-700/50 bg-slate-800/20 flex gap-3 flex-shrink-0 pb-8 sm:pb-4">
+            <button
+              onClick={onDelete}
+              className="flex-1 py-2.5 bg-red-500/10 text-red-500 border border-red-500/20 rounded-xl hover:bg-red-500/20 transition-all flex items-center justify-center gap-2 font-medium active:scale-[0.98]"
+            >
+              <Trash2 size={18} />
+              Hapus
+            </button>
+            <button
+              onClick={onClose}
+              className="flex-1 py-2.5 bg-slate-700 text-white rounded-xl hover:bg-slate-600 transition-all font-medium active:scale-[0.98]"
+            >
+              Tutup
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -154,16 +180,22 @@ export default function NotificationSidebar({ isOpen, onClose }: NotificationSid
       const unsubscribeUser = onValue(userNotifsRef, (userSnapshot) => {
         const userNotifs = userSnapshot.val() || {};
 
-        const mergedNotifs: Notification[] = Object.keys(globalNotifs).map((id) => {
-          const global = globalNotifs[id];
-          const user = userNotifs[id] || { isRead: false };
-          return {
-            ...global,
-            id,
-            isRead: user.isRead,
-            formattedTime: formatRelativeTime(global.timestamp),
-          };
-        });
+        const mergedNotifs: Notification[] = Object.keys(globalNotifs)
+          .filter((id) => {
+            const userNotif = userNotifs[id];
+            // Filter jika status isDeleted user adalah true
+            return !userNotif?.isDeleted;
+          })
+          .map((id) => {
+            const global = globalNotifs[id];
+            const user = userNotifs[id] || { isRead: false };
+            return {
+              ...global,
+              id,
+              isRead: user.isRead,
+              formattedTime: formatRelativeTime(global.timestamp),
+            };
+          });
 
         mergedNotifs.sort((a, b) => (a.isRead !== b.isRead ? (a.isRead ? 1 : -1) : 0));
         setNotifications(mergedNotifs);
@@ -179,7 +211,7 @@ export default function NotificationSidebar({ isOpen, onClose }: NotificationSid
   const markAsRead = (id: string) => {
     if (!currentUserUid) return;
     const userNotifRef = ref(rtdb, `user_notifications/${currentUserUid}/${id}`);
-    set(userNotifRef, { isRead: true });
+    update(userNotifRef, { isRead: true });
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
   };
 
@@ -187,7 +219,7 @@ export default function NotificationSidebar({ isOpen, onClose }: NotificationSid
     if (!currentUserUid) return;
     notifications.forEach((n) => {
       const userNotifRef = ref(rtdb, `user_notifications/${currentUserUid}/${n.id}`);
-      set(userNotifRef, { isRead: true });
+      update(userNotifRef, { isRead: true });
     });
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
   };
@@ -195,7 +227,8 @@ export default function NotificationSidebar({ isOpen, onClose }: NotificationSid
   const deleteNotification = (id: string) => {
     if (!currentUserUid) return;
     const userNotifRef = ref(rtdb, `user_notifications/${currentUserUid}/${id}`);
-    remove(userNotifRef);
+    // Soft delete: set isDeleted true, bukan remove node
+    update(userNotifRef, { isDeleted: true });
     setNotifications((prev) => prev.filter((n) => n.id !== id));
   };
 
@@ -204,7 +237,8 @@ export default function NotificationSidebar({ isOpen, onClose }: NotificationSid
     if (!window.confirm("Hapus semua notifikasi? Tindakan ini tidak bisa dikembalikan.")) return;
     notifications.forEach((n) => {
       const userNotifRef = ref(rtdb, `user_notifications/${currentUserUid}/${n.id}`);
-      remove(userNotifRef);
+      // Soft delete semua
+      update(userNotifRef, { isDeleted: true });
     });
     setNotifications([]);
   };
@@ -216,6 +250,9 @@ export default function NotificationSidebar({ isOpen, onClose }: NotificationSid
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      // Jangan tutup sidebar jika modal sedang terbuka
+      if (selectedNotification) return;
+
       if (sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
         onClose();
       }
@@ -228,7 +265,7 @@ export default function NotificationSidebar({ isOpen, onClose }: NotificationSid
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, selectedNotification]);
 
   return (
     <>
@@ -236,9 +273,8 @@ export default function NotificationSidebar({ isOpen, onClose }: NotificationSid
 
       <div
         ref={sidebarRef}
-        className={`fixed top-0 right-0 h-full w-full sm:w-96 bg-slate-900/95 border-l border-slate-700/50 shadow-2xl z-[70] transform transition-transform duration-300 ease-in-out ${
-          isOpen ? "translate-x-0" : "translate-x-full"
-        }`}
+        className={`fixed top-0 right-0 h-full w-full sm:w-96 bg-slate-900/95 border-l border-slate-700/50 shadow-2xl z-[70] transform transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "translate-x-full"
+          }`}
       >
         <div className="flex flex-col h-full">
           <div className="p-5 border-b border-slate-700/50 flex items-center justify-between bg-slate-800/50">
@@ -273,11 +309,10 @@ export default function NotificationSidebar({ isOpen, onClose }: NotificationSid
                 <div
                   key={notification.id}
                   onClick={() => handleNotificationClick(notification)}
-                  className={`group relative p-4 rounded-xl border transition-all duration-200 cursor-pointer ${
-                    !notification.isRead
-                      ? "bg-slate-800/80 border-slate-600/50 hover:bg-slate-800"
-                      : "bg-slate-800/20 border-transparent hover:bg-slate-800/40"
-                  }`}
+                  className={`group relative p-4 rounded-xl border transition-all duration-200 cursor-pointer ${!notification.isRead
+                    ? "bg-slate-800/80 border-slate-600/50 hover:bg-slate-800"
+                    : "bg-slate-800/20 border-transparent hover:bg-slate-800/40"
+                    }`}
                 >
                   {!notification.isRead && (
                     <span className="absolute top-4 right-4 w-2 h-2 bg-red-500 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.5)]"></span>
@@ -293,11 +328,10 @@ export default function NotificationSidebar({ isOpen, onClose }: NotificationSid
                     <div className="flex-1 min-w-0 space-y-1">
                       <div className="flex items-center gap-2 mb-1">
                         <span
-                          className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                            notification.type === "lomba"
-                              ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
-                              : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
-                          }`}
+                          className={`text-xs font-medium px-2 py-0.5 rounded-full ${notification.type === "lomba"
+                            ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                            : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                            }`}
                         >
                           {notification.type === "lomba" ? "Lomba" : "Beasiswa"}
                         </span>
@@ -312,9 +346,8 @@ export default function NotificationSidebar({ isOpen, onClose }: NotificationSid
                       </div>
 
                       <h3
-                        className={`text-sm font-semibold leading-snug ${
-                          !notification.isRead ? "text-slate-100" : "text-slate-300"
-                        }`}
+                        className={`text-sm font-semibold leading-snug ${!notification.isRead ? "text-slate-100" : "text-slate-300"
+                          }`}
                       >
                         {notification.title}
                       </h3>

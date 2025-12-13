@@ -57,29 +57,49 @@ export default function CommunityView() {
   const [members, setMembers] = useState<{ id: string; name: string; role: string }[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(true);
   const [userJoined, setUserJoined] = useState(false);
+  const [joinedCommunities, setJoinedCommunities] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    const loadCommunities = async () => {
-      try {
-        const q = query(collection(db, 'communities'));
-        const snapshot = await getDocs(q);
-        const list = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          members: doc.data().members_count || 0,
-        })) as Community[];
-        setCommunities(list);
-      } catch (err) {
-        console.error('Gagal muat komunitas:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (viewMode === 'join') {
-      loadCommunities();
+ useEffect(() => {
+  const loadCommunities = async () => {
+    if (!user) {
+      setLoading(false);
+      return;
     }
-  }, [viewMode]);
+
+    try {
+      // Ambil semua komunitas
+      const q = query(collection(db, 'communities'));
+      const snapshot = await getDocs(q);
+      const communityList = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        members: doc.data().members_count || 0,
+      })) as Community[];
+
+      setCommunities(communityList);
+
+      // Ambil semua keanggotaan user saat ini
+      const membershipQuery = query(
+        collection(db, 'memberships'),
+        where('user_id', '==', user.id)
+      );
+      const membershipSnapshot = await getDocs(membershipQuery);
+      const joinedIds = new Set<string>(
+        membershipSnapshot.docs.map(doc => doc.data().community_id)
+      );
+
+      setJoinedCommunities(joinedIds);
+    } catch (err) {
+      console.error('Gagal muat komunitas:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (viewMode === 'join') {
+    loadCommunities();
+  }
+}, [viewMode, user]); // tambahkan user sebagai dependensi
 
 
   const loadMembers = async (communityId: string) => {
@@ -191,6 +211,8 @@ export default function CommunityView() {
 
     alert('Berhasil gabung komunitas!');
     setUserJoined(true); // ✅ Update state lokal
+
+    setJoinedCommunities(prev => new Set(prev).add(communityId));
 
     // Opsional: refresh daftar anggota
     if (selectedCommunity?.id === communityId) {
@@ -363,9 +385,16 @@ export default function CommunityView() {
                       <User className="w-4 h-4" />
                       <span>{community.members} Anggota</span>
                     </div>
-                    <span className="text-blue-400 text-sm font-medium opacity-0 group-hover:opacity-100 transform translate-x-[-10px] group-hover:translate-x-0 transition-all flex items-center gap-1">
-                      Gabung <ArrowLeft className="w-4 h-4 rotate-180" />
-                    </span>
+
+                    {joinedCommunities.has(community.id) ? (
+                      <span className="text-green-400 text-sm font-medium opacity-100 flex items-center gap-1">
+                        Sudah Bergabung
+                      </span>
+                    ) : (
+                      <span className="text-blue-400 text-sm font-medium opacity-0 group-hover:opacity-100 transform translate-x-[-10px] group-hover:translate-x-0 transition-all flex items-center gap-1">
+                        Gabung <ArrowLeft className="w-4 h-4 rotate-180" />
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
