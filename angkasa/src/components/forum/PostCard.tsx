@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Heart, MessageCircle, Share2, Send, Trophy, GraduationCap, Copy, MessageSquareIcon, Clock, Link, Info, X, ChevronRight, ExternalLink } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Send, Trophy, GraduationCap, Copy, MessageSquareIcon, Clock, Link, X, ChevronRight, ExternalLink, BookOpen } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Types (reused from ForumFeed)
@@ -92,7 +92,7 @@ export default function PostCard({ post, currentUser, onLike, onCommentSubmit, o
       <motion.article
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-slate-800/40 backdrop-blur-xl rounded-2xl border border-slate-700/50 overflow-hidden hover:border-slate-600 transition-colors shadow-lg"
+        className="bg-slate-900/40 backdrop-blur-xl rounded-[2rem] border border-white/5 overflow-hidden hover:border-white/10 transition-all duration-300 shadow-xl hover:shadow-2xl hover:shadow-blue-500/5 group"
       >
         {/* Header */}
         <div className="p-5 flex items-start justify-between">
@@ -131,11 +131,11 @@ export default function PostCard({ post, currentUser, onLike, onCommentSubmit, o
         {/* Content */}
         <div className="px-5 pb-2">
           {post.title && (
-            <h3 className="text-lg font-bold text-white mb-2 leading-tight">
+            <h3 className="text-xl font-bold text-slate-100 mb-3 leading-tight tracking-tight">
               {post.title}
             </h3>
           )}
-          <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap mb-4">
+          <p className="text-slate-300/90 text-[15px] leading-relaxed whitespace-pre-wrap mb-5 font-normal tracking-wide">
             {post.content}
           </p>
 
@@ -200,13 +200,13 @@ export default function PostCard({ post, currentUser, onLike, onCommentSubmit, o
               </a>
             )}
 
-            {post.details && post.details.length > 0 && (
+            {post.details && post.details.length > 0 && (post.type === 'lomba' || post.type === 'beasiswa') && (
               <button
                 onClick={() => setIsDetailsOpen(true)}
-                className="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 transition-colors bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/20"
+                className="flex items-center gap-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 px-4 py-1.5 rounded-full shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 transition-all active:scale-95"
               >
-                <Info className="w-4 h-4" />
-                <span className="font-bold text-xs">Lihat Detail</span>
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>Lihat Detail</span>
               </button>
             )}
           </div>
@@ -360,85 +360,104 @@ export default function PostCard({ post, currentUser, onLike, onCommentSubmit, o
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative bg-slate-900 border border-white/10 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]"
+              className="relative bg-slate-900/80 backdrop-blur-3xl border border-white/10 rounded-3xl w-full max-w-5xl overflow-hidden shadow-2xl flex flex-col h-[80vh]"
             >
               {/* Modal Header */}
-              <div className="p-6 border-b border-white/10 flex justify-between items-start bg-slate-900/50 backdrop-blur-md">
+              <div className="p-6 border-b border-white/10 flex justify-between items-center bg-slate-900/95 backdrop-blur-md">
                 <div>
-                  <h2 className="text-xl font-bold text-white mb-1">
-                    Detail & Klasifikasi
+                  <h2 className="text-2xl font-bold text-white mb-1 flex items-center text-center gap-3">
+                    <BookOpen className="text-blue-500" /> Detail & Klasifikasi
                   </h2>
-                  <p className="text-sm text-slate-400">
-                    Pilih kategori di bawah untuk melihat detail lengkap.
+                  <p className="text-sm text-slate-400 text-center">
+                    Informasi lengkap dan klasifikasi kategori.
                   </p>
                 </div>
-                <button
-                  onClick={() => setIsDetailsOpen(false)}
-                  className="p-2 bg-white/5 hover:bg-white/10 rounded-xl text-slate-400 hover:text-white transition-colors"
-                >
-                  <X size={20} />
-                </button>
+                <div className="flex gap-2">
+                  {post.registrationLink && post.registrationLink !== '#' && (
+                    <a
+                      href={post.registrationLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-blue-600/20 flex items-center gap-2"
+                    >
+                      <Link size={16} /> Daftar
+                    </a>
+                  )}
+                  {post.externalLink && (
+                    <a
+                      href={post.externalLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold rounded-xl border border-slate-700 transition-all flex items-center gap-2"
+                    >
+                      <ExternalLink size={16} /> Website
+                    </a>
+                  )}
+                  <button
+                    onClick={() => setIsDetailsOpen(false)}
+                    className="p-2 bg-white/5 hover:bg-white/10 rounded-xl text-slate-400 hover:text-white transition-colors"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
               </div>
 
               {/* Modal Body */}
-              <div className="flex-1 overflow-y-auto p-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {/* Sidebar / List (Mobile: Top, Desktop: Left) */}
-                  <div className="md:col-span-1 space-y-2">
-                    {post.details?.map((detail, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setSelectedDetailIndex(index)}
-                        className={`w-full text-left p-3 rounded-xl border transition-all duration-200 flex items-center justify-between group ${selectedDetailIndex === index
-                            ? 'bg-blue-600/20 border-blue-500/50 text-white'
-                            : 'bg-white/5 border-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
-                          }`}
-                      >
-                        <span className="font-medium text-sm truncate">{detail.title}</span>
-                        {selectedDetailIndex === index && (
-                          <ChevronRight size={16} className="text-blue-400" />
-                        )}
-                      </button>
-                    ))}
-                  </div>
+              <div className="flex-1 overflow-y-auto p-0 flex flex-col md:flex-row">
+                {/* Sidebar */}
+                <div className="w-full md:w-1/3 bg-slate-900/50 border-b md:border-b-0 md:border-r border-white/10 p-4 space-y-2 overflow-y-auto max-h-[200px] md:max-h-none">
+                  <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 px-2">Kategori</h3>
+                  {post.details?.map((detail, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedDetailIndex(index)}
+                      className={`w-full text-left p-4 rounded-xl border transition-all duration-200 flex items-center justify-between group ${selectedDetailIndex === index
+                        ? 'bg-blue-600/20 border-blue-500/50 text-white shadow-lg shadow-blue-900/20'
+                        : 'bg-white/5 border-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
+                        }`}
+                    >
+                      <span className="font-bold text-sm truncate">{detail.title}</span>
+                      {selectedDetailIndex === index && (
+                        <ChevronRight size={16} className="text-blue-400" />
+                      )}
+                    </button>
+                  ))}
+                </div>
 
-                  {/* Content Area */}
-                  <div className="md:col-span-2 bg-white/5 border border-white/10 rounded-xl p-5 min-h-[300px] flex flex-col">
-                    {selectedDetailIndex !== null && post.details ? (
-                      <motion.div
-                        key={selectedDetailIndex}
-                        initial={{ opacity: 0, x: 10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="flex-1 flex flex-col"
-                      >
-                        <h3 className="text-lg font-bold text-white mb-3 pb-3 border-b border-white/10">
+                {/* Content Area */}
+                <div className="flex-1 bg-slate-900/30 p-6 md:p-8 min-h-[400px] flex flex-col">
+                  {selectedDetailIndex !== null && post.details ? (
+                    <motion.div
+                      key={selectedDetailIndex}
+                      initial={{ opacity: 0, x: 10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="flex-1 flex flex-col"
+                    >
+                      <div className="flex items-center gap-3 mb-6 pb-4 border-b border-white/10">
+                        <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400">
+                          <BookOpen size={20} />
+                        </div>
+                        <h3 className="text-xl font-bold text-white">
                           {post.details[selectedDetailIndex].title}
                         </h3>
-                        <div className="flex-1 overflow-y-auto text-slate-300 text-sm leading-relaxed whitespace-pre-line mb-6 custom-scrollbar pr-2">
-                          {post.details[selectedDetailIndex].description}
-                        </div>
-                        {post.externalLink && (
-                          <a
-                            href={post.externalLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2 mt-auto group"
-                          >
-                            <ExternalLink size={18} className="group-hover:scale-110 transition-transform" />
-                            Kunjungi Website
-                          </a>
-                        )}
-                      </motion.div>
-                    ) : (
-                      <div className="flex-1 flex flex-col items-center justify-center text-slate-500">
-                        <Info size={48} className="mb-4 opacity-20" />
-                        <p className="text-sm text-center">
-                          Pilih salah satu klasifikasi di samping<br />untuk melihat detailnya.
-                        </p>
                       </div>
-                    )}
-                  </div>
+                      
+                      <div className="flex-1 overflow-y-auto text-slate-300 text-base leading-relaxed whitespace-pre-line custom-scrollbar pr-4">
+                        {post.details[selectedDetailIndex].description}
+                      </div>
+                    </motion.div>
+                  ) : (
+                    <div className="flex-1 flex flex-col items-center justify-center text-slate-500">
+                      <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-6 animate-pulse">
+                        <BookOpen size={40} className="opacity-50" />
+                      </div>
+                      <h4 className="text-lg font-bold text-slate-300 mb-2">Pilih Kategori</h4>
+                      <p className="text-sm text-center max-w-xs leading-relaxed">
+                        Silakan pilih salah satu kategori di menu samping untuk melihat detail lengkap informasi.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             </motion.div>

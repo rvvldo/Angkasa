@@ -1,9 +1,10 @@
-import { UserPlus, TrendingUp, Sparkles, Shield } from 'lucide-react';
+import { UserPlus, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { db } from '../../firebase';
 import { collection, getDocs, getDoc, doc, setDoc, arrayUnion } from 'firebase/firestore';
 import { useAuth } from '../AuthProvider';
+import { useAlert } from '../ui/AlertSystem';
 import { motion } from 'framer-motion';
 
 interface ForumRightSidebarProps {
@@ -28,6 +29,7 @@ const popularSearches = [
 
 export default function ForumRightSidebar({ onSearch, onSearchClick }: ForumRightSidebarProps) {
     const { user } = useAuth();
+    const { showAlert } = useAlert();
     const [suggestedUsers, setSuggestedUsers] = useState<{ id: string; name: string; role: string; avatar: string }[]>([]);
     const navigate = useNavigate();
 
@@ -75,7 +77,7 @@ const followUser = async (userIdToFollow: string) => {
     }
 
     if (friendIds.includes(userIdToFollow)) {
-      alert('Sudah mengikuti user ini.');
+      showAlert('Sudah mengikuti user ini.', 'info');
       return;
     }
 
@@ -85,10 +87,10 @@ const followUser = async (userIdToFollow: string) => {
       { merge: true }
     );
 
-    alert('Berhasil mengikuti!');
+    showAlert('Berhasil mengikuti!', 'success');
   } catch (err) {
     console.error('Gagal mengikuti:', err);
-    alert('Gagal mengikuti user.');
+    showAlert('Gagal mengikuti user.', 'error');
   }
 };
 

@@ -1,6 +1,7 @@
 // src/components/GroupView.tsx
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../AuthProvider';
+import { useAlert } from '../ui/AlertSystem';
 import { db } from '../../firebase';
 import {
   collection,
@@ -36,6 +37,7 @@ interface GroupMessage {
 
 export default function GroupView() {
   const { user } = useAuth();
+  const { showAlert } = useAlert();
   const [groups, setGroups] = useState<Group[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
   const [message, setMessage] = useState('');
@@ -136,7 +138,7 @@ export default function GroupView() {
       setMessage('');
     } catch (err) {
       console.error('Gagal kirim pesan grup:', err);
-      alert('Gagal mengirim pesan.');
+      showAlert('Gagal mengirim pesan.', 'error');
     }
   };
 

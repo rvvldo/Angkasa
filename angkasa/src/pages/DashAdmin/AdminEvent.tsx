@@ -12,12 +12,12 @@ import {
   MoreVertical,
   X,
   Tag,
-  MessageCircle,
   Users,
 } from 'lucide-react';
 import type { Post } from './AdminCommon';
 import { InputField, Modal, GlassCard, FloatingActionButton } from './AdminCommon';
-import { ref, push, set, remove, onValue, update, get, serverTimestamp } from 'firebase/database';
+import { useAlert } from '../../components/ui/AlertSystem';
+import { ref, push, set, remove, onValue, update, get } from 'firebase/database';
 import { auth, rtdb } from '../../firebase';
 
 // COMPONENT: Post Form for Events
@@ -166,11 +166,26 @@ const EventDetailBottomModal: React.FC<{
   const formatDate = (date: Date) =>
     date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 
-  const handleDelete = () => {
-    if (confirm(`Apakah Anda yakin ingin menghapus event "${post.title}"?`)) {
-      onDelete(post.id);
-      onClose();
-    }
+  const handleDelete = async () => {
+    // Ideally this should use the showConfirm from context, but we are inside a sub-component.
+    // Prop drilling showConfirm or using hook here.
+    // Since AdminEvent is invalid hook call if used outside, we should pass it or use hook inside component.
+    // Let's assume we can use hook inside this component as it is a React FC.
+    // However, I did not add useAlert to EventDetailBottomModal.
+    // I will trigger the onDelete which calls handleDeletePost in parent, which has confirmation.
+    // Wait, line 170 calls confirm directly.
+    // I should change onDelete signature to NOT handle confirmation inside, OR handle it here.
+    // The parent's handleDeletePost ALSO has confirmation (line 606).
+    // Let's see: onEdit/onDelete are passed from parent. Parent's handleDeletePost (line 606) has confirm.
+    // Logic at 170: confirm -> onDelete(post.id).
+    // Logic at 605: handleDeletePost(id) -> confirm -> remove.
+    // So if I call onDelete(post.id) here, it calls handleDeletePost(id) which calls confirm again?
+    // Let's check parent usage: onDelete={handleDeletePost}.
+    // Yes, parent `handleDeletePost` checks confirm. Do we need double confirm?
+    // If I remove confirm here, parent will confirm.
+    // So I will just call onDelete(post.id) directly here!
+    onDelete(post.id);
+    onClose();
   };
 
   return (
@@ -452,6 +467,7 @@ const AdminEvent: React.FC = () => {
   const [postToEdit, setPostToEdit] = useState<Post | null>(null);
   const [selectedPostForDetail, setSelectedPostForDetail] = useState<Post | null>(null);
   const [selectedPostForParticipants, setSelectedPostForParticipants] = useState<Post | null>(null);
+  const { showAlert, showConfirm } = useAlert();
 
   const loadPosts = useCallback(async () => {
     const currentUser = auth.currentUser;
@@ -571,7 +587,7 @@ const AdminEvent: React.FC = () => {
       }
     } catch (error) {
       console.error('Error adding post:', error);
-      alert('Gagal menambahkan event.');
+      showAlert('Gagal menambahkan event.', 'error');
     }
   };
 
@@ -598,21 +614,24 @@ const AdminEvent: React.FC = () => {
       });
     } catch (error) {
       console.error('Error update:', error);
-      alert('Gagal memperbarui event.');
+      showAlert('Gagal memperbarui event.', 'error');
     }
   };
 
   const handleDeletePost = async (id: string) => {
-    if (!confirm('Apakah Anda yakin ingin menghapus event ini? Tindakan ini tidak dapat dibatalkan.')) {
-      return;
-    }
+    const confirmed = await showConfirm(
+      'Apakah Anda yakin ingin menghapus event ini? Tindakan ini tidak dapat dibatalkan.',
+      'Konfirmasi Hapus'
+    );
+    if (!confirmed) return;
 
     try {
       await remove(ref(rtdb, `admins/${auth.currentUser?.uid}/posts/${id}`));
       await remove(ref(rtdb, `posts/${id}`));
+      showAlert('Event berhasil dihapus', 'success');
     } catch (error) {
       console.error('Error delete:', error);
-      alert('Gagal menghapus event.');
+      showAlert('Gagal menghapus event.', 'error');
     }
   };
 

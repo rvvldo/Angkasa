@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Search, Calendar, Clock, ExternalLink, ArrowLeft, Loader2 } from 'lucide-react';
 import { rtdb } from '../../firebase';
 import { ref, onValue } from 'firebase/database';
+import { useAlert } from '../ui/AlertSystem';
 
 interface Event {
     id: string;
@@ -24,6 +25,7 @@ export default function EventView() {
     const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
     const [events, setEvents] = useState<Event[]>([]);
     const [loading, setLoading] = useState(true);
+    const { showAlert } = useAlert();
 
     const ensureAbsoluteUrl = (url?: string) => {
         if (!url) return '#';
@@ -84,7 +86,7 @@ export default function EventView() {
                 await navigator.share(shareData);
             } else {
                 navigator.clipboard.writeText(window.location.href);
-                alert('Link acara berhasil disalin!');
+                showAlert('Link acara berhasil disalin!', 'success');
             }
         } catch (err) {
             console.error('Error sharing:', err);

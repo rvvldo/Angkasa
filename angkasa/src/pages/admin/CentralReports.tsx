@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
+import { useAlert } from '../../components/ui/AlertSystem';
 import { AlertCircle, CheckCircle, Clock, Filter, Search, X, Mail, Calendar, Tag, FileText, Send } from 'lucide-react';
-import { collection, query, orderBy, onSnapshot, doc, updateDoc, getDocs } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 
 interface Report {
@@ -18,6 +19,7 @@ interface Report {
 
 export default function CentralReports() {
     const [reports, setReports] = useState<Report[]>([]);
+    const { showAlert } = useAlert();
     const [loading, setLoading] = useState(true);
     const [selectedReport, setSelectedReport] = useState<Report | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
@@ -64,10 +66,11 @@ export default function CentralReports() {
             });
             setReplyText('');
             setSelectedReport(null);
-            alert("Balasan terkirim!");
+            setSelectedReport(null);
+            showAlert("Balasan terkirim!", "success");
         } catch (err) {
             console.error("Failed to send reply:", err);
-            alert("Gagal mengirim balasan.");
+            showAlert("Gagal mengirim balasan.", "error");
         } finally {
             setIsSendingReply(false);
         }

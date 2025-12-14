@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
+import { useAlert } from '../../components/ui/AlertSystem';
 import {
     Trash2,
     Calendar,
     Clock,
     LinkIcon,
     AlertCircle,
-    Search
+    Search,
+    BookOpen,
+    X
 } from 'lucide-react';
 import { ref, onValue, remove } from 'firebase/database';
 import { rtdb } from '../../firebase';
@@ -20,19 +23,64 @@ interface Post {
     avatar?: string;
     timestamp: string;
     category: string;
-    type: 'lomba' | 'beasiswa';
+    type: 'lomba' | 'beasiswa' | 'seminar' | 'acara';
     tags?: string[];
     registrationLink?: string;
     eventDate?: string;
     closingDate?: string;
     authorId?: string;
+    details?: { title: string; description: string }[];
 }
+
+const DetailModal = ({ post, onClose }: { post: Post; onClose: () => void }) => {
+    if (!post || !post.details) return null;
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+            <div className="absolute inset-0 bg-black/80 transition-opacity" onClick={onClose}></div>
+            <div className="relative bg-slate-900 border border-white/10 rounded-2xl shadow-2xl w-full max-w-2xl mx-auto transform transition-all animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+                <div className="p-6 border-b border-white/10 flex justify-between items-center bg-slate-900/50 backdrop-blur-md rounded-t-2xl">
+                    <div>
+                        <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                            <BookOpen size={24} className="text-blue-400" />
+                            Detail & Klasifikasi
+                        </h2>
+                        <p className="text-sm text-slate-400 mt-1">{post.title}</p>
+                    </div>
+                    <button onClick={onClose} className="text-slate-400 hover:text-white p-2 hover:bg-white/10 rounded-lg transition-colors">
+                        <X size={20} />
+                    </button>
+                </div>
+                
+                <div className="p-6 overflow-y-auto custom-scrollbar space-y-4">
+                    {post.details.map((detail, index) => (
+                        <div key={index} className="bg-white/5 border border-white/10 p-5 rounded-xl hover:bg-white/10 transition-colors">
+                            <h4 className="font-bold text-white text-lg mb-2 text-blue-300">{detail.title}</h4>
+                            <p className="text-slate-300 leading-relaxed whitespace-pre-wrap">{detail.description}</p>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="p-4 border-t border-white/10 bg-slate-900/50 backdrop-blur-md rounded-b-2xl flex justify-end">
+                    <button 
+                        onClick={onClose}
+                        className="px-5 py-2.5 bg-slate-800 text-white font-medium rounded-xl hover:bg-slate-700 transition-colors"
+                    >
+                        Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 export default function CentralPosts() {
     const [posts, setPosts] = useState<Post[]>([]);
+    const { showAlert, showConfirm } = useAlert();
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [filterType, setFilterType] = useState<'all' | 'lomba' | 'beasiswa'>('all');
+    const [filterType, setFilterType] = useState<'all' | 'lomba' | 'beasiswa' | 'seminar' | 'acara'>('all');
+    const [selectedPostForDetail, setSelectedPostForDetail] = useState<Post | null>(null);
 
     useEffect(() => {
         const postsRef = ref(rtdb, 'posts');
@@ -57,9 +105,11 @@ export default function CentralPosts() {
     }, []);
 
     const handleDeletePost = async (post: Post) => {
-        if (!confirm(`Apakah Anda yakin ingin menghapus postingan "${post.title}"?`)) {
-            return;
-        }
+        const confirmed = await showConfirm(
+            `Apakah Anda yakin ingin menghapus postingan "${post.title}"?`,
+            'Konfirmasi Hapus'
+        );
+        if (!confirmed) return;
 
         try {
             // Delete from global posts
@@ -70,10 +120,10 @@ export default function CentralPosts() {
                 await remove(ref(rtdb, `admins/${post.authorId}/posts/${post.id}`));
             }
 
-            alert('Postingan berhasil dihapus');
+            showAlert('Postingan berhasil dihapus', 'success');
         } catch (error) {
             console.error('Error deleting post:', error);
-            alert('Gagal menghapus postingan. Coba lagi.');
+            showAlert('Gagal menghapus postingan. Coba lagi.', 'error');
         }
     };
 
@@ -156,11 +206,31 @@ export default function CentralPosts() {
                         >
                             Beasiswa
                         </button>
+                        <button
+                            onClick={() => setFilterType('seminar')}
+                            className={`px-4 py-2 rounded-lg transition ${
+                                filterType === 'seminar'
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                            }`}
+                        >
+                            Seminar
+                        </button>
+                        <button
+                            onClick={() => setFilterType('acara')}
+                            className={`px-4 py-2 rounded-lg transition ${
+                                filterType === 'acara'
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                            }`}
+                        >
+                            Acara
+                        </button>
                     </div>
                 </div>
 
                 {/* Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                     <div className="bg-slate-800 border border-slate-700 rounded-lg p-4">
                         <p className="text-slate-400 text-sm">Total Postingan</p>
                         <p className="text-2xl font-bold text-white">{posts.length}</p>
@@ -175,6 +245,18 @@ export default function CentralPosts() {
                         <p className="text-slate-400 text-sm">Beasiswa</p>
                         <p className="text-2xl font-bold text-white">
                             {posts.filter(p => p.type === 'beasiswa').length}
+                        </p>
+                    </div>
+                    <div className="bg-slate-800 border border-slate-700 rounded-lg p-4">
+                        <p className="text-slate-400 text-sm">Seminar</p>
+                        <p className="text-2xl font-bold text-white">
+                            {posts.filter(p => p.type === 'seminar').length}
+                        </p>
+                    </div>
+                    <div className="bg-slate-800 border border-slate-700 rounded-lg p-4">
+                        <p className="text-slate-400 text-sm">Acara</p>
+                        <p className="text-2xl font-bold text-white">
+                            {posts.filter(p => p.type === 'acara').length}
                         </p>
                     </div>
                 </div>
@@ -216,10 +298,14 @@ export default function CentralPosts() {
                                             className={`px-2.5 py-1 rounded-full text-xs font-medium ${
                                                 post.type === 'lomba'
                                                     ? 'bg-blue-400/10 text-blue-400'
-                                                    : 'bg-blue-400/10 text-blue-400'
+                                                    : post.type === 'beasiswa'
+                                                    ? 'bg-yellow-400/10 text-yellow-400'
+                                                    : post.type === 'seminar'
+                                                    ? 'bg-purple-400/10 text-purple-400'
+                                                    : 'bg-green-400/10 text-green-400'
                                             }`}
                                         >
-                                            {post.type === 'lomba' ? 'Lomba' : 'Beasiswa'}
+                                            {post.type.charAt(0).toUpperCase() + post.type.slice(1)}
                                         </span>
                                     </div>
 
@@ -280,6 +366,17 @@ export default function CentralPosts() {
                                         </p>
                                     </div>
 
+                                    {/* Additional Details Button */}
+                                    {post.details && post.details.length > 0 && (post.type === 'lomba' || post.type === 'beasiswa') && (
+                                        <button
+                                            onClick={() => setSelectedPostForDetail(post)}
+                                            className="w-full mt-2 py-2 bg-slate-700/50 hover:bg-slate-700 text-blue-300 text-xs font-semibold rounded-lg transition-colors border border-blue-500/10 flex items-center justify-center gap-2"
+                                        >
+                                            <BookOpen size={14} />
+                                            Lihat Detail & Klasifikasi
+                                        </button>
+                                    )}
+
                                     {/* Actions */}
                                     <div className="flex gap-2 pt-2">
                                         {post.registrationLink && (
@@ -305,6 +402,13 @@ export default function CentralPosts() {
                             </div>
                         ))}
                     </div>
+                )}
+                
+                {selectedPostForDetail && (
+                    <DetailModal 
+                        post={selectedPostForDetail} 
+                        onClose={() => setSelectedPostForDetail(null)} 
+                    />
                 )}
             </div>
         </AdminLayout>

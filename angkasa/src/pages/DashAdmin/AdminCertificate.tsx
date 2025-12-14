@@ -5,6 +5,7 @@ import { searchUsers } from '../../lib/userService';
 import { Search, Send, Award, X } from 'lucide-react';
 
 import { InputField, GlassCard } from './AdminCommon';
+import { useAlert } from '../../components/ui/AlertSystem';
 
 export default function AdminCertificate() {
   const [recipient, setRecipient] = useState<{ id: string; name: string; email: string } | null>(null);
@@ -22,6 +23,7 @@ export default function AdminCertificate() {
     imageUrl: '',
   });
 
+  const { showAlert } = useAlert();
   const [loading, setLoading] = useState(false);
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -34,7 +36,7 @@ export default function AdminCertificate() {
       setSearchResults(results);
     } catch (error) {
       console.error("Error searching users:", error);
-      alert("Gagal mencari user");
+      showAlert("Gagal mencari user", 'error');
     } finally {
       setIsSearching(false);
     }
@@ -43,7 +45,7 @@ export default function AdminCertificate() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!recipient) {
-      alert("Pilih penerima sertifikat terlebih dahulu");
+      showAlert("Pilih penerima sertifikat terlebih dahulu", 'warning');
       return;
     }
 
@@ -71,10 +73,9 @@ export default function AdminCertificate() {
           icon: formData.icon,
           imageUrl: formData.imageUrl || null,
         },
-        attachments: 1
       });
 
-      alert(`✅ Sertifikat berhasil dikirim ke ${recipient.name}!`);
+      showAlert(`✅ Sertifikat berhasil dikirim ke ${recipient.name}!`, 'success');
 
       // Reset form
       setFormData({
@@ -91,7 +92,7 @@ export default function AdminCertificate() {
       setSearchResults([]);
     } catch (error) {
       console.error("Error sending certificate:", error);
-      alert("Gagal mengirim sertifikat");
+      showAlert("Gagal mengirim sertifikat", 'error');
     } finally {
       setLoading(false);
     }

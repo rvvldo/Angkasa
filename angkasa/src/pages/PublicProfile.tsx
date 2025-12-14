@@ -32,6 +32,7 @@ import {
   Play,
 } from "lucide-react";
 import Particles from '../components/Particles';
+import { useAlert } from '../components/ui/AlertSystem';
 
 interface Certificate {
   id: string;
@@ -70,6 +71,7 @@ export default function PublicProfile() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
+  const { showAlert } = useAlert();
 
   const [user, setUser] = useState<User | null>(null);
   const [productions, setProductions] = useState<Certificate[]>([]);
@@ -166,7 +168,7 @@ export default function PublicProfile() {
       setIsFriend(true);
     } catch (err) {
       console.error("Gagal menambah teman:", err);
-      alert("Gagal menambah teman. Coba lagi.");
+      showAlert("Gagal menambah teman. Coba lagi.", "error");
     }
   };
   

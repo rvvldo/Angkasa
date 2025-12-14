@@ -21,8 +21,6 @@ import {
   Play,
   ChevronRight,
   CheckCircle,
-  Eye,
-  TrendingUp,
   Instagram,
   Youtube,
   Twitch
@@ -31,6 +29,7 @@ import { addDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db, auth } from '../firebase';
 import Particles from '../components/Particles';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAlert } from '../components/ui/AlertSystem';
 
 interface Certificate {
   id: string;
@@ -85,6 +84,7 @@ const mockAchievements: Achievement[] = [
 export default function Profile() {
   const { user, updateProfile, logout, isAudioPlaying, togglePlay } = useAuth();
   const navigate = useNavigate();
+  const { showAlert, showConfirm } = useAlert();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -206,10 +206,10 @@ export default function Profile() {
         tags: tags.split(" ").filter(Boolean),
         social_media: { instagram, youtube, tiktok },
       });
-      alert("✅ Profil berhasil diperbarui!");
+      showAlert("✅ Profil berhasil diperbarui!", 'success');
     } catch (error) {
       console.error("Failed to save profile:", error);
-      alert("❌ Gagal memperbarui profil.");
+      showAlert("❌ Gagal memperbarui profil.", 'error');
     } finally {
       setIsSaving(false);
     }
@@ -229,11 +229,11 @@ export default function Profile() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 2 * 1024 * 1024) {
-      alert("❌ Ukuran file terlalu besar. Maksimal 2MB");
+      showAlert("❌ Ukuran file terlalu besar. Maksimal 2MB", 'error');
       return;
     }
     if (!file.type.startsWith('image/')) {
-      alert("❌ File harus berupa gambar");
+      showAlert("❌ File harus berupa gambar", 'error');
       return;
     }
     const reader = new FileReader();
@@ -242,10 +242,10 @@ export default function Profile() {
       setBannerPhoto(dataUrl);
       try {
         await updateProfile({ banner_photo: dataUrl });
-        alert("✅ Banner berhasil diubah!");
+        showAlert("✅ Banner berhasil diubah!", 'success');
       } catch (error) {
         console.error(error);
-        alert("❌ Gagal menyimpan banner");
+        showAlert("❌ Gagal menyimpan banner", 'error');
       }
     };
     reader.readAsDataURL(file);
@@ -256,11 +256,11 @@ export default function Profile() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 1 * 1024 * 1024) {
-      alert("❌ Ukuran file terlalu besar. Maksimal 1MB");
+      showAlert("❌ Ukuran file terlalu besar. Maksimal 1MB", 'error');
       return;
     }
     if (!file.type.startsWith('image/')) {
-      alert("❌ File harus berupa gambar");
+      showAlert("❌ File harus berupa gambar", 'error');
       return;
     }
     const reader = new FileReader();
@@ -269,36 +269,36 @@ export default function Profile() {
       setProfilePhoto(dataUrl);
       try {
         await updateProfile({ profile_photo: dataUrl });
-        alert("✅ Foto profil berhasil diubah!");
+        showAlert("✅ Foto profil berhasil diubah!", 'success');
       } catch (error) {
         console.error(error);
-        alert("❌ Gagal menyimpan foto profil");
+        showAlert("❌ Gagal menyimpan foto profil", 'error');
       }
     };
     reader.readAsDataURL(file);
   };
 
   const handleDeleteBanner = async () => {
-    if (!confirm("Yakin ingin menghapus banner?")) return;
+    if (!await showConfirm("Yakin ingin menghapus banner?", "Hapus Banner", "Hapus")) return;
     try {
       setBannerPhoto("");
       await updateProfile({ banner_photo: "" });
-      alert("✅ Banner berhasil dihapus!");
+      showAlert("✅ Banner berhasil dihapus!", 'success');
     } catch (error) {
       console.error(error);
-      alert("❌ Gagal menghapus banner");
+      showAlert("❌ Gagal menghapus banner", 'error');
     }
   };
 
   const handleDeleteProfilePhoto = async () => {
-    if (!confirm("Yakin ingin menghapus foto profil?")) return;
+    if (!await showConfirm("Yakin ingin menghapus foto profil?", "Hapus Foto", "Hapus")) return;
     try {
       setProfilePhoto("");
       await updateProfile({ profile_photo: "" });
-      alert("✅ Foto profil berhasil dihapus!");
+      showAlert("✅ Foto profil berhasil dihapus!", 'success');
     } catch (error) {
       console.error(error);
-      alert("❌ Gagal menghapus foto profil");
+      showAlert("❌ Gagal menghapus foto profil", 'error');
     }
   };
 
@@ -322,7 +322,7 @@ export default function Profile() {
         const uid = user?.id || currentUser?.uid;
 
         if (!uid) {
-            alert("Error: User ID not found. Please reload the page.");
+            showAlert("Error: User ID not found. Please reload the page.", 'error');
             return;
         }
 
@@ -345,12 +345,12 @@ export default function Profile() {
             setMyReports(prev => [{id: docRef.id, ...newReport}, ...prev]);
 
             setShowHelpModal(false);
-            alert('✅ Laporan berhasil dikirim!');
+            showAlert('✅ Laporan berhasil dikirim!', 'success');
             setReportIssue('');
             setReportDescription('');
         } catch (err: any) {
             console.error("Error sending report:", err);
-            alert(`Gagal mengirim laporan: ${err.message || err}`);
+            showAlert(`Gagal mengirim laporan: ${err.message || err}`, 'error');
         } finally {
             setIsSubmittingReport(false);
         }

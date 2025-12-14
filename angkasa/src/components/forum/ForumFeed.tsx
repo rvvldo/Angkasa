@@ -55,6 +55,7 @@ export default function ForumFeed({
           eventDate: data[key].eventDate || new Date().toISOString(),
           closingDate: data[key].closingDate || new Date().toISOString(),
           likedBy: data[key].likedBy || {},
+          details: data[key].details || [],
         })).filter(post => post.type === 'lomba' || post.type === 'beasiswa');
 
         postsArray.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
@@ -181,7 +182,7 @@ export default function ForumFeed({
   }
 
   return (
-    <div className="w-full max-w-3xl mx-auto mb-4 space-y-6">
+    <div className="w-full max-w-5xl mx-auto mb-4 space-y-6">
       {/* Search & Filter Header */}
       <section className="sticky top-[68px] sm:top-20 z-10 glass-nav rounded-xl sm:rounded-2xl p-1.5 sm:p-2 bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 shadow-xl" ref={searchRef}>
         <div className="relative">
@@ -245,20 +246,20 @@ export default function ForumFeed({
       </section>
 
       {/* Tabs */}
-      <div className="flex gap-4 border-b border-slate-800 pb-1">
+      <div className="flex gap-2 p-1 bg-slate-900/40 rounded-xl border border-white/5 w-fit">
         {[
-          { key: 'rekomendasi', label: 'Untuk Anda', icon: Sparkles },
+          { key: 'rekomendasi', label: 'Rekomendasi', icon: Sparkles },
           { key: 'following', label: 'Mengikuti', icon: Filter },
         ].map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key as any)}
-            className={`flex items-center gap-2 px-1 pb-3 text-sm font-medium border-b-2 transition-colors relative ${activeTab === tab.key
-              ? 'text-blue-400 border-blue-400'
-              : 'text-slate-500 border-transparent hover:text-slate-300'
+            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg transition-all duration-300 ${activeTab === tab.key
+              ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
+              : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
               }`}
           >
-            <tab.icon className={activeTab === tab.key ? "w-4 h-4 text-blue-400" : "w-4 h-4 text-slate-500"} />
+            <tab.icon className={activeTab === tab.key ? "w-3.5 h-3.5" : "w-3.5 h-3.5 opacity-50"} />
             {tab.label}
           </button>
         ))}

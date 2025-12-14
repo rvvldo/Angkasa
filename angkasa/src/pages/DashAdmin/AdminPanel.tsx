@@ -153,45 +153,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ userId, user, onNavigate }) => 
             </GlassCard>
           </div>
 
-          {/* Quick Actions */}
-          <div>
-            <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-4">
-              <span className="w-1 h-6 bg-blue-500 rounded-full"></span>
-              Menu Cepat
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <button
-                type="button"
-                onClick={() => onNavigate?.('posts')}
-                className="bg-slate-800/40 hover:bg-blue-600/10 border border-white/5 hover:border-blue-500/30 p-4 md:p-5 rounded-2xl transition-all duration-200 text-left group hover:-translate-y-1 backdrop-blur-sm"
-              >
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="p-2 bg-blue-600 rounded-lg text-white shadow-lg shadow-blue-500/20 group-hover:shadow-blue-500/40 transition-shadow">
-                    <List size={20} />
-                  </div>
-                  <h3 className="text-base font-bold text-white leading-tight">Kelola<br />Postingan</h3>
-                </div>
-                <p className="text-xs text-slate-400 group-hover:text-blue-200 transition-colors">Buat atau edit info.</p>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => onNavigate?.('certificates')}
-                className="bg-slate-800/40 hover:bg-emerald-600/10 border border-white/5 hover:border-emerald-500/30 p-4 md:p-5 rounded-2xl transition-all duration-200 text-left group hover:-translate-y-1 backdrop-blur-sm"
-              >
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="p-2 bg-emerald-600 rounded-lg text-white shadow-lg shadow-emerald-500/20 group-hover:shadow-emerald-500/40 transition-shadow">
-                    <Award size={20} />
-                  </div>
-                  <h3 className="text-base font-bold text-white leading-tight">Kirim<br />Sertifikat</h3>
-                </div>
-                <p className="text-xs text-slate-400 group-hover:text-emerald-200 transition-colors">Kirim e-Sertifikat.</p>
-              </button>
-
-
-            </div>
-          </div>
-
           {/* Recent Activity Section */}
           <GlassCard>
             <div className="flex justify-between items-center mb-5">

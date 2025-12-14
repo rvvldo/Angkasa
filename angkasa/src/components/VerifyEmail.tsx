@@ -2,10 +2,12 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../components/AuthProvider';
 import { useNavigate } from 'react-router-dom';
+import { useAlert } from './ui/AlertSystem';
 
 export default function VerifyEmailPage() {
   const { user, isEmailVerified, sendVerificationEmail } = useAuth();
   const navigate = useNavigate();
+  const { showAlert } = useAlert();
   const [sending, setSending] = useState(false);
   const [countdown, setCountdown] = useState(60);
 
@@ -22,16 +24,16 @@ export default function VerifyEmailPage() {
       // Reset countdown setelah sukses kirim
       setCountdown(60);
     } catch (err) {
-      alert('Gagal mengirim email verifikasi');
+      showAlert('Gagal mengirim email verifikasi', 'error');
     } finally {
       setSending(false);
     }
   };
 
   useEffect(() => {
-    let timer: NodeJS.Timeout;
+    let timer: ReturnType<typeof setTimeout>;
     if (countdown > 0 && !sending) {
-      timer = setTimeout(() => setCountdown(c - 1), 1000);
+      timer = setTimeout(() => setCountdown(prev => prev - 1), 1000);
     }
     return () => clearTimeout(timer);
   }, [countdown, sending]);

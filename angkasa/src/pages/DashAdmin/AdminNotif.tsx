@@ -12,6 +12,7 @@ import {
   Tag,
 } from 'lucide-react';
 import { InputField, Modal, GlassCard } from './AdminCommon';
+import { useAlert } from '../../components/ui/AlertSystem';
 import {
   ref,
   push,
@@ -162,14 +163,15 @@ const NotificationCard: React.FC<{
     });
   };
 
-  const handleDelete = () => {
-    if (
-      confirm(
-        `Hapus notifikasi "${notification.title}"?\nAksi ini tidak bisa dikembalikan.`
-      )
-    ) {
-      onDelete(notification.id);
-    }
+  const handleDelete = async () => {
+    // Note: We need to pass showConfirm from parent or use context here.
+    // However, NotificationCard is a child component.
+    // Ideally, pass a dedicated onDelete handler that handles confirmation.
+    // But since we are inside AdminNotif which will be wrapped, let's keep it simple
+    // and assume onDelete in parent handles confirmation OR utilize context if safe.
+    // Actually, hook calls inside map are fine if component is distinct, but here it is a sub component defined in file.
+    // Better refactor: Move showConfirm to AdminNotif and pass "handleDeleteRequest" to Card.
+    onDelete(notification.id); 
   };
 
   return (
@@ -231,6 +233,7 @@ const AdminNotif: React.FC = () => {
   const [badge, setBadge] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<{ message: string; success: boolean } | null>(null);
+  const { showAlert, showConfirm } = useAlert();
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -338,8 +341,9 @@ const AdminNotif: React.FC = () => {
       });
       setIsModalOpen(false);
       setNotifToEdit(null);
+      setNotifToEdit(null);
     } catch (error) {
-      alert('Gagal memperbarui notifikasi. Coba lagi.');
+      showAlert('Gagal memperbarui notifikasi. Coba lagi.', 'error');
       console.error('Edit error:', error);
     } finally {
       setIsModalSubmitting(false);
@@ -348,11 +352,19 @@ const AdminNotif: React.FC = () => {
 
   const handleDeleteNotification = async (id: string) => {
     if (!auth.currentUser) return;
+    
+    const confirmed = await showConfirm(
+      'Hapus notifikasi ini? Aksi ini tidak bisa dikembalikan.',
+      'Konfirmasi Hapus'
+    );
+    if (!confirmed) return;
+
     try {
       const notifRef = ref(rtdb, `admins/${auth.currentUser.uid}/notifications/${id}`);
       await remove(notifRef);
+      showAlert('Notifikasi berhasil dihapus', 'success');
     } catch (error) {
-      alert('Gagal menghapus notifikasi. Coba lagi.');
+      showAlert('Gagal menghapus notifikasi. Coba lagi.', 'error');
       console.error('Delete error:', error);
     }
   };

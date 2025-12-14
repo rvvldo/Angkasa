@@ -1,6 +1,7 @@
 // src/components/NotificationSidebar.tsx
 import { X, Bell, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useAlert } from "./ui/AlertSystem";
 import { ref, onValue, update } from "firebase/database";
 import { auth } from "../firebase";
 import { rtdb } from "../firebase";
@@ -161,6 +162,7 @@ export default function NotificationSidebar({ isOpen, onClose }: NotificationSid
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
+  const { showConfirm } = useAlert();
 
   const currentUser = auth.currentUser;
   const currentUserUid = currentUser?.uid || null;
@@ -232,9 +234,9 @@ export default function NotificationSidebar({ isOpen, onClose }: NotificationSid
     setNotifications((prev) => prev.filter((n) => n.id !== id));
   };
 
-  const deleteAllNotifications = () => {
+  const deleteAllNotifications = async () => {
     if (!currentUserUid) return;
-    if (!window.confirm("Hapus semua notifikasi? Tindakan ini tidak bisa dikembalikan.")) return;
+    if (!await showConfirm("Hapus semua notifikasi? Tindakan ini tidak bisa dikembalikan.", "Hapus Semua", "Hapus")) return;
     notifications.forEach((n) => {
       const userNotifRef = ref(rtdb, `user_notifications/${currentUserUid}/${n.id}`);
       // Soft delete semua

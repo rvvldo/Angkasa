@@ -10,16 +10,16 @@ import {
   Trophy,
   Medal,
   Star,
-  Play,
-  Share2,
-  Trash2,
   MoreVertical,
-  Reply
+  Reply,
+  Share2,
+  Trash2
 } from "lucide-react";
 import Particles from "../components/Particles";
 import { motion } from "framer-motion";
 import { addDoc, collection, query, where, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
+import { useAlert } from '../components/ui/AlertSystem';
 
 interface EmailData {
   id: string;
@@ -44,7 +44,8 @@ interface EmailData {
 }
 
 export default function EmailDetail() {
-  const { user, isAudioPlaying, togglePlay } = useAuth();
+  const { user } = useAuth();
+  const { showAlert } = useAlert();
   const navigate = useNavigate();
   const { id } = useParams();
   
@@ -180,7 +181,7 @@ export default function EmailDetail() {
                        <button 
                          onClick={async () => {
                             if (!user) {
-                              alert("⚠️ Anda harus login terlebih dahulu");
+                              showAlert("⚠️ Anda harus login terlebih dahulu", 'error');
                               return;
                             }
                             
@@ -194,7 +195,7 @@ export default function EmailDetail() {
                               const existingDocs = await getDocs(existingQuery);
                               
                               if (!existingDocs.empty) {
-                                alert("⚠️ Sertifikat ini sudah ada dalam portofolio Anda");
+                                showAlert("⚠️ Sertifikat ini sudah ada dalam portofolio Anda", 'warning');
                                 return;
                               }
                               
@@ -213,11 +214,11 @@ export default function EmailDetail() {
                                 icon: item.icon
                               });
                               
-                              alert(`✅ "${item.title}" berhasil ditambahkan ke portofolio!`);
+                              showAlert(`✅ "${item.title}" berhasil ditambahkan ke portofolio!`, 'success');
                               navigate("/profile");
                             } catch (error) {
                               console.error("Error adding to portfolio:", error);
-                              alert("❌ Gagal menambahkan ke portofolio. Silakan coba lagi.");
+                              showAlert("❌ Gagal menambahkan ke portofolio. Silakan coba lagi.", 'error');
                             }
                           }}
                          className="flex-1 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl shadow-lg shadow-blue-900/20 font-medium transition-all transform active:scale-[0.98] flex items-center justify-center gap-2"

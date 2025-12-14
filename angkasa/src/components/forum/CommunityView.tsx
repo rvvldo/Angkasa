@@ -3,6 +3,7 @@ import { Users, Plus, Search, ArrowLeft, Shield, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../../firebase';
 import { useAuth } from '../AuthProvider';
+import { useAlert } from '../ui/AlertSystem';
 import {
   increment,
   collection,
@@ -14,7 +15,6 @@ import {
   serverTimestamp,
   doc,
   updateDoc,
-  arrayUnion,
 } from 'firebase/firestore';
 
 
@@ -45,6 +45,7 @@ const mockMembers = [
 
 export default function CommunityView() {
   const navigate = useNavigate();
+  const { showAlert } = useAlert();
   const [viewMode, setViewMode] = useState<'menu' | 'create' | 'join' | 'detail'>('menu');
   const [selectedCommunity, setSelectedCommunity] = useState<Community | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -150,7 +151,7 @@ export default function CommunityView() {
 
   const handleCreateCommunity = async () => {
     if (!user) {
-      alert('Anda harus login terlebih dahulu.');
+      showAlert('Anda harus login terlebih dahulu.', 'error');
       return;
     }
     //   // Ambil nilai dari form (gunakan state atau ref)
@@ -159,12 +160,12 @@ export default function CommunityView() {
     //   const type = "lomba"; // ✅ ambil dari select
 
     if (!name || !description || !type) {
-      alert('Semua field wajib diisi');
+      showAlert('Semua field wajib diisi', 'warning');
       return;
     }
 
     if (!name.trim() || !description.trim()) {
-      alert('Nama dan deskripsi wajib diisi.');
+      showAlert('Nama dan deskripsi wajib diisi.', 'warning');
       return;
     }
 
@@ -186,11 +187,11 @@ export default function CommunityView() {
         joined_at: serverTimestamp(),
       });
 
-      alert('Komunitas berhasil dibuat!');
+      showAlert('Komunitas berhasil dibuat!', 'success');
       setViewMode('menu');
     } catch (err) {
       console.error('Gagal buat komunitas:', err);
-      alert('Gagal membuat komunitas.');
+      showAlert('Gagal membuat komunitas.', 'error');
     }
   };
 
@@ -209,7 +210,7 @@ export default function CommunityView() {
       members_count: increment(1),
     });
 
-    alert('Berhasil gabung komunitas!');
+    showAlert('Berhasil gabung komunitas!', 'success');
     setUserJoined(true); // ✅ Update state lokal
 
     setJoinedCommunities(prev => new Set(prev).add(communityId));
@@ -220,7 +221,7 @@ export default function CommunityView() {
     }
   } catch (err) {
     console.error('Gagal gabung:', err);
-    alert('Gagal gabung komunitas.');
+    showAlert('Gagal gabung komunitas.', 'error');
   }
 };
 

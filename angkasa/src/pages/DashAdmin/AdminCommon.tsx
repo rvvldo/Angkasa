@@ -20,6 +20,7 @@ export interface Post {
   commentCount?: number;
   authorId?: string;
   author?: string; // Optional: often used for display
+  organizer?: string;
 }
 
 // Utility: simulate unique ID 

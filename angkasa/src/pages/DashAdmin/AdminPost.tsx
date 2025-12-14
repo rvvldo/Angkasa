@@ -19,6 +19,7 @@ import type { Post } from './AdminCommon';
 import { InputField, Modal, GlassCard, FloatingActionButton } from './AdminCommon';
 import { ref, push, set, remove, onValue, update, get, serverTimestamp } from 'firebase/database';
 import { auth, rtdb } from '../../firebase';
+import { useAlert } from '../../components/ui/AlertSystem';
 
 // COMPONENT: Post Form
 const PostForm: React.FC<{
@@ -226,8 +227,11 @@ const PostDetailBottomModal: React.FC<{
   const formatDate = (date: Date) =>
     date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 
-  const handleDelete = () => {
-    if (confirm(`Apakah Anda yakin ingin menghapus postingan "${post.title}"?`)) {
+  const { showConfirm } = useAlert();
+
+  const handleDelete = async () => {
+    const isConfirmed = await showConfirm(`Apakah Anda yakin ingin menghapus postingan "${post.title}"?`, 'Hapus Postingan', 'Hapus Sekarang');
+    if (isConfirmed) {
       onDelete(post.id);
       onClose();
     }
@@ -358,19 +362,21 @@ const CommentSlidePanel: React.FC<{
     (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
   );
 
+  const { showConfirm, showAlert } = useAlert();
+  
   const handleSendReply = (parentId: string) => {
-    if (!parentId || !replyText.trim()) {
-      console.warn('Cannot send reply: missing parentId or text');
-      return;
-    }
-    onReply(replyText.trim(), parentId);
-    setReplyText('');
-    setReplyingTo(null);
-  };
+      //... existing logic but with showAlert if error?
+      if (!parentId || !replyText.trim()) return;
+      onReply(replyText.trim(), parentId);
+      setReplyText('');
+      setReplyingTo(null);
+  }
 
-  const handleDeleteClick = (commentId: string) => {
-    if (commentId && confirm("Hapus komentar ini?")) {
-      onDeleteComment(commentId);
+  const handleDeleteClick = async (commentId: string) => {
+    if (commentId) {
+      if (await showConfirm("Hapus komentar ini?", 'Hapus Komentar', 'Ya, Hapus')) {
+         onDeleteComment(commentId);
+      }
     }
   };
 
@@ -714,6 +720,7 @@ const AdminPost: React.FC = () => {
   const [selectedPostForDetail, setSelectedPostForDetail] = useState<Post | null>(null);
   const [selectedPostForComments, setSelectedPostForComments] = useState<Post | null>(null);
   const [selectedPostForParticipants, setSelectedPostForParticipants] = useState<Post | null>(null);
+  const { showAlert, showConfirm } = useAlert();
 
   const loadPosts = useCallback(async () => {
     const currentUser = auth.currentUser;
@@ -802,7 +809,7 @@ const AdminPost: React.FC = () => {
       });
     } catch (error) {
       console.error('Error replying to comment:', error);
-      alert('Gagal membalas komentar. Coba lagi.');
+      showAlert('Gagal membalas komentar. Coba lagi.', 'error');
     }
   };
 
@@ -813,7 +820,7 @@ const AdminPost: React.FC = () => {
       await remove(ref(rtdb, `posts/${postId}/comments/${commentId}`));
     } catch (error) {
       console.error('Error deleting comment:', error);
-      alert('Gagal menghapus komentar.');
+      showAlert('Gagal menghapus komentar.', 'error');
     }
   };
 
@@ -886,7 +893,7 @@ const AdminPost: React.FC = () => {
       }
     } catch (error) {
       console.error('Error adding post:', error);
-      alert('Gagal menambahkan postingan.');
+      showAlert('Gagal menambahkan postingan.', 'error');
     }
   };
 
@@ -911,21 +918,25 @@ const AdminPost: React.FC = () => {
       });
     } catch (error) {
       console.error('Error update:', error);
-      alert('Gagal memperbarui postingan.');
+      showAlert('Gagal memperbarui postingan.', 'error');
     }
   };
 
   const handleDeletePost = async (id: string) => {
-    if (!confirm('Apakah Anda yakin ingin menghapus postingan ini? Tindakan ini tidak dapat dibatalkan.')) {
-      return;
-    }
+    const confirmed = await showConfirm(
+      'Apakah Anda yakin ingin menghapus postingan ini? Tindakan ini tidak dapat dibatalkan.', 
+      'Hapus Permanen',
+      'Hapus'
+    );
+    if (!confirmed) return;
 
     try {
       await remove(ref(rtdb, `admins/${auth.currentUser?.uid}/posts/${id}`));
       await remove(ref(rtdb, `posts/${id}`));
+      showAlert('Postingan berhasil dihapus 🗑️', 'success');
     } catch (error) {
       console.error('Error delete:', error);
-      alert('Gagal menghapus postingan.');
+      showAlert('Gagal menghapus postingan.', 'error');
     }
   };
 

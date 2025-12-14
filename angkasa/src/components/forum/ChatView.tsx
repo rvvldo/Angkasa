@@ -11,6 +11,7 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 import { useAuth } from '../AuthProvider'; // pastikan path benar
+import { useAlert } from '../ui/AlertSystem';
 import { db } from '../../firebase';
 import {
   doc,
@@ -44,6 +45,7 @@ interface Message {
 
 export default function ChatView() {
   const { user } = useAuth();
+  const { showAlert } = useAlert();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [message, setMessage] = useState('');
@@ -141,7 +143,7 @@ export default function ChatView() {
       setMessage('');
     } catch (err) {
       console.error('Gagal kirim pesan:', err);
-      alert('Gagal mengirim pesan.');
+      showAlert('Gagal mengirim pesan.', 'error');
     }
   };
 
