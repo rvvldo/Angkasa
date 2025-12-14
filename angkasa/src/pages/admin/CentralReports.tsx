@@ -1,29 +1,29 @@
 import { useState, useEffect } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { useAlert } from '../../components/ui/AlertSystem';
-import { AlertCircle, CheckCircle, Clock, Filter, Search, X, Mail, Calendar, Tag, FileText, Send } from 'lucide-react';
-import { collection, query, orderBy, onSnapshot, doc, updateDoc } from 'firebase/firestore';
+import { AlertCircle, CheckCircle, Clock, Filter, Search, X, Mail, Calendar, Tag, FileText, Send, Trash2 } from 'lucide-react';
+import { collection, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore'; // Changed imports for deleteDoc
 import { db } from '../../firebase';
 
 interface Report {
-    id: string; // Changed to string for Firestore ID
+    id: string;
     email: string;
     issue: string;
     category: string;
     date: string;
     status: 'Baru' | 'Proses' | 'Selesai';
     description: string;
-    reply?: string; // Admin reply
+    reply?: string;
     uid?: string;
 }
 
 export default function CentralReports() {
     const [reports, setReports] = useState<Report[]>([]);
-    const { showAlert } = useAlert();
+    const { showAlert, showConfirm } = useAlert(); // Destructured showConfirm
     const [loading, setLoading] = useState(true);
     const [selectedReport, setSelectedReport] = useState<Report | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
-    
+
     const [replyText, setReplyText] = useState('');
     const [isSendingReply, setIsSendingReply] = useState(false);
 
@@ -32,18 +32,18 @@ export default function CentralReports() {
         const q = query(collection(db, 'reports'), orderBy('createdAt', 'desc'));
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const fetchedReports = snapshot.docs.map(doc => {
-                 const data = doc.data();
-                 return {
-                     id: doc.id,
-                     email: data.email || 'No Email',
-                     issue: data.issue || 'No Issue',
-                     category: data.category || 'General',
-                     date: data.date || 'N/A',
-                     status: data.status || 'Baru',
-                     description: data.description || '',
-                     reply: data.reply,
-                     uid: data.uid
-                 } as Report;
+                const data = doc.data();
+                return {
+                    id: doc.id,
+                    email: data.email || 'No Email',
+                    issue: data.issue || 'No Issue',
+                    category: data.category || 'General',
+                    date: data.date || 'N/A',
+                    status: data.status || 'Baru',
+                    description: data.description || '',
+                    reply: data.reply,
+                    uid: data.uid
+                } as Report;
             });
             setReports(fetchedReports);
             setLoading(false);
@@ -62,10 +62,9 @@ export default function CentralReports() {
             const reportRef = doc(db, 'reports', selectedReport.id);
             await updateDoc(reportRef, {
                 reply: replyText,
-                status: 'Selesai' // Auto-close ticket on reply? Or 'Proses'? Usually 'Selesai' if answered.
+                status: 'Selesai'
             });
             setReplyText('');
-            setSelectedReport(null);
             setSelectedReport(null);
             showAlert("Balasan terkirim!", "success");
         } catch (err) {
@@ -77,12 +76,35 @@ export default function CentralReports() {
     };
 
     const handleStatusUpdate = async (reportId: string, newStatus: Report['status']) => {
-         try {
+        try {
             await updateDoc(doc(db, 'reports', reportId), {
                 status: newStatus
             });
         } catch (err) {
             console.error("Failed to update status:", err);
+        }
+    };
+
+    const handleDeleteReport = async (reportId: string, e?: React.MouseEvent) => {
+        if (e) e.stopPropagation();
+
+        const confirmed = await showConfirm(
+            "Apakah Anda yakin ingin menghapus laporan ini? Tindakan ini tidak dapat dibatalkan.",
+            "Hapus Laporan",
+            "Ya, Hapus"
+        );
+
+        if (!confirmed) return;
+
+        try {
+            await deleteDoc(doc(db, 'reports', reportId));
+            showAlert("Laporan berhasil dihapus.", "success");
+            if (selectedReport && selectedReport.id === reportId) {
+                setSelectedReport(null);
+            }
+        } catch (err) {
+            console.error("Failed to delete report:", err);
+            showAlert("Gagal menghapus laporan.", "error");
         }
     };
 
@@ -170,7 +192,7 @@ export default function CentralReports() {
                                     <th className="px-6 py-4 font-medium">Masalah</th>
                                     <th className="px-6 py-4 font-medium">Tanggal</th>
                                     <th className="px-6 py-4 font-medium">Status</th>
-                                    <th className="px-6 py-4 font-medium">Aksi</th>
+                                    <th className="px-6 py-4 font-medium text-right">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-700">
@@ -185,7 +207,7 @@ export default function CentralReports() {
                                         <tr
                                             key={report.id}
                                             onClick={() => setSelectedReport(report)}
-                                            className="hover:bg-slate-700/30 transition-colors cursor-pointer"
+                                            className="hover:bg-slate-700/30 transition-colors cursor-pointer group"
                                         >
                                             <td className="px-6 py-4 text-slate-300">{report.email}</td>
                                             <td className="px-6 py-4 text-slate-400">{report.category}</td>
@@ -208,16 +230,26 @@ export default function CentralReports() {
                                                     <option value="Selesai" className="bg-slate-800 text-slate-300">Selesai</option>
                                                 </select>
                                             </td>
-                                            <td className="px-6 py-4">
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setSelectedReport(report);
-                                                    }}
-                                                    className="text-blue-400 hover:text-blue-300 text-sm font-medium"
-                                                >
-                                                    Tindak Lanjut
-                                                </button>
+                                            <td className="px-6 py-4 text-right">
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setSelectedReport(report);
+                                                        }}
+                                                        className="text-blue-400 hover:text-blue-300 text-sm font-medium hover:bg-blue-500/10 p-1.5 rounded"
+                                                        title="Lihat Detail"
+                                                    >
+                                                        Lihat Detail
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => handleDeleteReport(report.id, e)}
+                                                        className="text-red-400 hover:text-red-300 hover:bg-red-500/10 p-1.5 rounded transition-colors opacity-0 group-hover:opacity-100"
+                                                        title="Hapus Laporan"
+                                                    >
+                                                        <Trash2 size={18} />
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))
@@ -241,6 +273,8 @@ export default function CentralReports() {
                                 <X size={24} />
                             </button>
                         </div>
+
+                        {/* ... (Previous Modal Content) ... */}
 
                         <div className="p-6 space-y-6">
                             <div className="flex items-start gap-4">
@@ -292,7 +326,7 @@ export default function CentralReports() {
                                     {selectedReport.description}
                                 </p>
                             </div>
-                            
+
                             {/* Reply Section */}
                             <div className="bg-slate-900/50 p-4 rounded-lg border border-slate-700/50">
                                 <div className="flex items-center gap-2 text-slate-400 mb-2">
@@ -310,7 +344,7 @@ export default function CentralReports() {
                                             className="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white text-sm focus:outline-none focus:border-blue-500 min-h-[80px]"
                                         />
                                         <div className="flex justify-end">
-                                            <button 
+                                            <button
                                                 onClick={handleReply}
                                                 disabled={isSendingReply || !replyText.trim()}
                                                 className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded text-sm font-medium transition-colors disabled:opacity-50"
@@ -322,7 +356,14 @@ export default function CentralReports() {
                                 )}
                             </div>
 
-                            <div className="flex justify-end gap-3 pt-4 border-t border-slate-700">
+                            <div className="flex justify-between gap-3 pt-4 border-t border-slate-700">
+                                <button
+                                    onClick={() => handleDeleteReport(selectedReport.id)}
+                                    className="px-4 py-2 bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors flex items-center gap-2"
+                                >
+                                    <Trash2 size={18} />
+                                    Hapus Laporan
+                                </button>
                                 <button
                                     onClick={() => setSelectedReport(null)}
                                     className="px-4 py-2 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"

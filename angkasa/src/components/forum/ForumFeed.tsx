@@ -246,7 +246,7 @@ export default function ForumFeed({
       </section>
 
       {/* Tabs */}
-      <div className="flex gap-2 p-1 bg-slate-900/40 rounded-xl border border-white/5 w-fit">
+      <div className="flex gap-2 p-1 bg-slate-900/40 rounded-xl border border-white/5 w-fi">
         {[
           { key: 'rekomendasi', label: 'Rekomendasi', icon: Sparkles },
           { key: 'following', label: 'Mengikuti', icon: Filter },

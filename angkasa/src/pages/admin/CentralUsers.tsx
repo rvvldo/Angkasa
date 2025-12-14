@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
-import { Users, GraduationCap, Building2, Search, Filter, X, Mail, Calendar, Phone, MapPin, Activity } from 'lucide-react';
-import { collection, getDocs } from 'firebase/firestore';
+import { Users, GraduationCap, Building2, Search, Filter, X, Mail, Calendar, Phone, MapPin, Activity, Ban, CheckCircle, Lock } from 'lucide-react';
+import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
+import { useAlert } from '../../components/ui/AlertSystem';
 
 interface User {
     id: number;
@@ -15,6 +16,8 @@ interface User {
     lastLogin: string;
     bio: string;
     location: string;
+    isBlocked?: boolean;
+    blockedReason?: string;
 }
 
 export default function CentralUsers() {
@@ -29,6 +32,11 @@ export default function CentralUsers() {
         provider: 0
     });
 
+    // Blocking state
+    const { showAlert, showConfirm } = useAlert(); // Need to add useAlert import
+    // Note: Assuming useAlert is available via hook, if not add import.
+    // The previous file content didn't show useAlert imported. I should add it.
+
     useEffect(() => {
         const fetchUsers = async () => {
             try {
@@ -36,20 +44,22 @@ export default function CentralUsers() {
                 const querySnapshot = await getDocs(collection(db, 'users'));
                 const fetchedUsers: User[] = [];
                 let pelajarCount = 0;
-                
+
                 querySnapshot.forEach((doc) => {
                     const data = doc.data();
                     fetchedUsers.push({
                         id: doc.id as any,
                         name: data.name || 'No Name',
                         email: data.email || '',
-                        role: 'Pelajar', // Force role for Firestore users
-                        status: data.status || 'Aktif',
+                        role: 'Pelajar',
+                        status: data.isBlocked ? 'Non-aktif' : (data.status || 'Aktif'),
                         joined: data.createdAt ? new Date(data.createdAt).toLocaleDateString() : 'N/A',
                         phone: data.phone || '-',
                         lastLogin: data.lastLogin || '-',
                         bio: data.bio || '',
-                        location: data.location || '-'
+                        location: data.location || '-',
+                        isBlocked: data.isBlocked || false,
+                        blockedReason: data.blockedReason || ''
                     });
                     pelajarCount++;
                 });
@@ -57,10 +67,10 @@ export default function CentralUsers() {
                 // 2. Fetch Admin Providers from Realtime Database
                 const { ref, get } = await import('firebase/database'); // Dynamic import to ensure rtdb is available
                 const { rtdb } = await import('../../firebase');
-                
+
                 const adminRef = ref(rtdb, 'admins');
                 const adminSnapshot = await get(adminRef);
-                
+
                 let providerCount = 0;
 
                 if (adminSnapshot.exists()) {
@@ -99,6 +109,61 @@ export default function CentralUsers() {
     }, []);
 
     const [searchQuery, setSearchQuery] = useState('');
+
+    const handleBlockUser = async (userId: string) => {
+        // Only block standard users (Firestore), not admin providers (RTDB) for now based on current logic
+        const confirmed = await showConfirm(
+            "Apakah Anda yakin ingin memblokir pengguna ini? Mereka tidak akan bisa login lagi.",
+            "Blokir Pengguna",
+            "Ya, Blokir"
+        );
+
+        if (!confirmed) return;
+
+        // Ask for reason (Simulated with window.prompt for simplicity, ideally a custom modal)
+        const reason = window.prompt("Masukkan alasan pemblokiran:", "Melanggar aturan komunitas");
+        if (!reason) return;
+
+        try {
+            await updateDoc(doc(db, 'users', userId), {
+                isBlocked: true,
+                blockedReason: reason,
+                status: 'Non-aktif'
+            });
+
+            setUsers(prev => prev.map(u => u.id.toString() === userId ? { ...u, isBlocked: true, blockedReason: reason, status: 'Non-aktif' } : u));
+            setSelectedUser(null);
+            showAlert("Pengguna berhasil diblokir.", "success");
+        } catch (err) {
+            console.error("Failed to block user:", err);
+            showAlert("Gagal memblokir pengguna.", "error");
+        }
+    };
+
+    const handleUnblockUser = async (userId: string) => {
+        const confirmed = await showConfirm(
+            "Apakah Anda yakin ingin membuka blokir pengguna ini?",
+            "Buka Blokir",
+            "Ya, Buka Blokir"
+        );
+
+        if (!confirmed) return;
+
+        try {
+            await updateDoc(doc(db, 'users', userId), {
+                isBlocked: false,
+                blockedReason: '',
+                status: 'Aktif'
+            });
+
+            setUsers(prev => prev.map(u => u.id.toString() === userId ? { ...u, isBlocked: false, blockedReason: '', status: 'Aktif' } : u));
+            setSelectedUser(null);
+            showAlert("Blokir pengguna dibuka.", "success");
+        } catch (err) {
+            console.error("Failed to unblock user:", err);
+            showAlert("Gagal membuka blokir.", "error");
+        }
+    };
 
     const filteredUsers = users.filter(user => {
         const matchesSearch =
@@ -328,16 +393,39 @@ export default function CentralUsers() {
                                 </p>
                             </div>
 
-                            <div className="flex justify-end gap-3 pt-4 border-t border-slate-700">
-                                <button
-                                    onClick={() => setSelectedUser(null)}
-                                    className="px-4 py-2 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
-                                >
-                                    Tutup
-                                </button>
-                                <button className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors font-medium">
-                                    Edit Pengguna
-                                </button>
+                            <div className="flex justify-between gap-3 pt-4 border-t border-slate-700">
+                                <div className="flex gap-2">
+                                    {selectedUser.role === 'Pelajar' && (
+                                        selectedUser.isBlocked ? (
+                                            <button
+                                                onClick={() => handleUnblockUser(selectedUser.id.toString())}
+                                                className="px-4 py-2 bg-green-500/10 text-green-400 hover:bg-green-500/20 rounded-lg transition-colors flex items-center gap-2 font-medium"
+                                            >
+                                                <CheckCircle size={18} />
+                                                Buka Blokir
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={() => handleBlockUser(selectedUser.id.toString())}
+                                                className="px-4 py-2 bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors flex items-center gap-2 font-medium"
+                                            >
+                                                <Ban size={18} />
+                                                Blokir Pengguna
+                                            </button>
+                                        )
+                                    )}
+                                </div>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => setSelectedUser(null)}
+                                        className="px-4 py-2 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
+                                    >
+                                        Tutup
+                                    </button>
+                                    <button className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors font-medium">
+                                        Edit Pengguna
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>

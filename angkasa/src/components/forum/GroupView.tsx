@@ -45,6 +45,8 @@ export default function GroupView() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageBase64, setImageBase64] = useState<string | null>(null);
 
   // Scroll otomatis
   useEffect(() => {
@@ -123,24 +125,50 @@ export default function GroupView() {
     return () => unsubscribe();
   }, [selectedGroup]);
 
-  // ✉️ Kirim pesan ke grup
-  const handleSend = async () => {
-    if (!user || !selectedGroup || !message.trim()) return;
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
 
-    try {
-      await addDoc(collection(db, 'group_messages'), {
-        community_id: selectedGroup.id,
-        sender_id: user.id,
-        sender_name: user.name,
-        content: message.trim(),
-        timestamp: serverTimestamp(),
-      });
-      setMessage('');
-    } catch (err) {
-      console.error('Gagal kirim pesan grup:', err);
-      showAlert('Gagal mengirim pesan.', 'error');
-    }
+  if (file.size > 100 * 1024) { // batasi ke 100 KB
+    showAlert('Gambar terlalu besar! Maks 100 KB.', 'error');
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    const base64 = reader.result as string;
+    setImageBase64(base64);
+    setImagePreview(base64); // untuk preview
   };
+  reader.readAsDataURL(file);
+};
+
+
+
+  // ✉️ Kirim pesan ke grup
+ const handleSend = async () => {
+  if (!user || !selectedGroup) return;
+
+  const contentToSend = message.trim() || imageBase64;
+  if (!contentToSend) return;
+
+  try {
+    await addDoc(collection(db, 'group_messages'), {
+      community_id: selectedGroup.id,
+      sender_id: user.id,
+      sender_name: user.name,
+      content: contentToSend,
+      isImage: !!imageBase64, // tambahkan flag
+      timestamp: serverTimestamp(),
+    });
+    setMessage('');
+    setImageBase64(null);
+    setImagePreview(null);
+  } catch (err) {
+    console.error('Gagal kirim pesan:', err);
+    showAlert('Gagal mengirim pesan.', 'error');
+  }
+};
 
   const onEmojiClick = (emojiObject: any) => {
     setMessage((prev) => prev + emojiObject.emoji);
@@ -233,46 +261,64 @@ export default function GroupView() {
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
             <div className="flex justify-center">
               <span className="px-3 py-1 bg-slate-800/50 rounded-full text-xs text-slate-500">Hari ini</span>
             </div>
 
-            {messages.map((msg) => {
-              const isMe = msg.sender_id === user.id;
-              return (
-                <div key={msg.id} className={`flex gap-3 ${isMe ? 'flex-row-reverse' : ''}`}>
-                  {!isMe && (
-                    <div className="w-8 h-8 rounded-full bg-slate-700 flex-shrink-0"></div>
-                  )}
-                  <div
-                    className={`p-3 rounded-lg max-w-[80%] ${isMe
-                      ? 'bg-blue-600 rounded-tr-none'
-                      : 'bg-slate-800 rounded-tl-none'
-                      }`}
-                  >
-                    {!isMe && (
-                      <div className="flex items-baseline gap-2 mb-1">
-                        <span className="text-xs font-medium text-blue-400">{msg.sender_name}</span>
-                      </div>
-                    )}
-                    <p className={`text-sm ${isMe ? 'text-white' : 'text-slate-300'}`}>{msg.content}</p>
-                    <span className={`text-xs mt-1 block ${isMe ? 'text-blue-200' : 'text-slate-500'}`}>
-                      {formatTime(msg.timestamp)}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
+{messages.map((msg) => {
+  const isMe = msg.sender_id === user.id;
+  return (
+    <div key={msg.id} className={`flex gap-3 ${isMe ? 'flex-row-reverse' : ''}`}>
+      {!isMe && (
+        <div className="w-8 h-8 rounded-full bg-slate-700 flex-shrink-0"></div>
+      )}
+      <div
+        className={`p-3 rounded-lg max-w-[80%] ${isMe
+          ? 'bg-blue-600 rounded-tr-none'
+          : 'bg-slate-800 rounded-tl-none'
+        }`}
+      >
+        {!isMe && (
+          <div className="flex items-baseline gap-2 mb-1">
+            <span className="text-xs font-medium text-blue-400">{msg.sender_name}</span>
+          </div>
+        )}
+        {/* INI YANG DIGANTI */}
+        {msg.isImage ? (
+          <img
+            src={msg.content}
+            alt="Gambar"
+            className="max-w-[100%] h-auto rounded-md"
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
+        ) : (
+          <p className={`text-sm ${isMe ? 'text-white' : 'text-slate-300'}`}>
+            {msg.content}
+          </p>
+        )}
+        <span className={`text-xs mt-1 block ${isMe ? 'text-blue-200' : 'text-slate-500'}`}>
+          {formatTime(msg.timestamp)}
+        </span>
+      </div>
+    </div>
+  );
+})}
             <div ref={messagesEndRef} />
           </div>
 
           {/* Input Area */}
           <div className="p-4 max-lg:pb-10 border-t border-slate-600/30 bg-slate-800/50">
             <div className="flex items-center gap-2">
-              <button className="p-2 text-slate-400 hover:text-white rounded-full hover:bg-slate-700/50">
+              <label className="p-2 text-slate-400 hover:text-white rounded-full hover:bg-slate-700/50 cursor-pointer">
                 <Paperclip className="w-5 h-5" />
-              </button>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
+              </label>
               <input
                 type="text"
                 value={message}
@@ -281,6 +327,24 @@ export default function GroupView() {
                 placeholder="Ketik pesan..."
                 className="flex-1 px-4 py-2.5 bg-slate-900/50 border border-slate-700/50 rounded-full text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
+              {imagePreview && (
+                <div className="mt-2 flex items-center gap-2">
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="h-12 w-12 object-cover rounded-md"
+                  />
+                  <button
+                    onClick={() => {
+                      setImagePreview(null);
+                      setImageBase64(null);
+                    }}
+                    className="text-xs text-red-400 hover:text-red-300"
+                  >
+                    Hapus
+                  </button>
+                </div>
+              )}
               <div className="relative">
                 <button
                   onClick={() => setShowEmojiPicker(!showEmojiPicker)}
@@ -294,13 +358,13 @@ export default function GroupView() {
                   </div>
                 )}
               </div>
-              <button
-                onClick={handleSend}
-                disabled={!message.trim()}
-                className="p-2.5 bg-blue-600 text-white rounded-full hover:bg-blue-500 transition-colors disabled:opacity-50"
-              >
-                <Send className="w-5 h-5" />
-              </button>
+                <button
+                  onClick={handleSend}
+                  disabled={!message.trim() && !imageBase64} // aktif jika ada teks ATAU gambar
+                  className="p-2.5 bg-blue-600 text-white rounded-full hover:bg-blue-500 transition-colors disabled:opacity-50"
+                >
+                  <Send className="w-5 h-5" />
+                </button>
             </div>
           </div>
         </div>

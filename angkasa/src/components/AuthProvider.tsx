@@ -29,6 +29,8 @@ type User = {
     youtube?: string;
     tiktok?: string;
   };
+  isBlocked?: boolean;
+  blockedReason?: string;
 };
 
 type AuthContextType = {
@@ -134,7 +136,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               profile_photo: data.profile_photo,
               availability: data.availability,
               tags: data.tags,
-              social_media: data.social_media
+              social_media: data.social_media,
+              isBlocked: data.isBlocked || false,
+              blockedReason: data.blockedReason || '',
             };
           } else {
             // ✅ Buat profil default di Firestore jika belum ada
