@@ -20,6 +20,7 @@ import { motion } from "framer-motion";
 import { addDoc, collection, query, where, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAlert } from '../components/ui/AlertSystem';
+import AIAgent from "../components/AIAgent";
 
 interface EmailData {
   id: string;
@@ -335,6 +336,7 @@ export default function EmailDetail() {
 
          {renderContent()}
       </main>
+      <AIAgent />
     </div>
   );
 }

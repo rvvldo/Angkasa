@@ -14,7 +14,6 @@ import EmailDetail from './pages/EmailDetail';
 import Notifikasi from './pages/Notifikasi';
 import Register from './pages/Register';
 import Profil from './pages/Profil';
-import AIAgent from './components/AIAgent';
 import CentralDashboard from './pages/admin/CentralDashboard';
 import CentralUsers from './pages/admin/CentralUsers';
 import CentralPosts from './pages/admin/CentralPosts';
@@ -96,7 +95,7 @@ function App() {
                 </Routes>
               </MaintenanceWrapper>
             </main>
-            <AIAgent />
+            
           </div>
           <BlockedUserModal />
         </AlertProvider>

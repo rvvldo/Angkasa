@@ -31,6 +31,7 @@ import { db, auth } from '../firebase';
 import Particles from '../components/Particles';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAlert } from '../components/ui/AlertSystem';
+import AIAgent from "../components/AIAgent";
 
 interface Certificate {
   id: string;
@@ -1123,6 +1124,7 @@ export default function Profile() {
           </motion.div>
         )}
       </AnimatePresence>
+      <AIAgent />
     </div >
   );
 }

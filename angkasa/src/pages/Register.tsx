@@ -15,6 +15,7 @@ import {
 import { auth, db } from '../firebase';
 import { Link } from 'react-router-dom';
 import Particles from '../components/Particles';
+import AIAgent from '../components/AIAgent';
 
 export default function RegisterPage() {
   const [name, setName] = useState('');
@@ -272,6 +273,7 @@ export default function RegisterPage() {
           </div>
         </div>
       </div>
+      <AIAgent />
     </div>
   );
 }

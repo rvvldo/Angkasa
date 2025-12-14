@@ -4,6 +4,7 @@ import { useAuth } from '../components/AuthProvider';
 import { useNavigate, useLocation } from 'react-router-dom'; // ✅ tambahkan useLocation
 import Particles from '../components/Particles';
 import { Link } from 'react-router-dom';
+import AIAgent from '../components/AIAgent';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -195,6 +196,7 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
+      <AIAgent />
     </div>
   );
 }

@@ -8,7 +8,12 @@ interface Message {
     timestamp: Date;
 }
 
-export default function AIAgent() {
+interface AIAgentProps {
+  className?: string;
+  // ...props lain
+}
+
+export default function AIAgent({ className = '' }: AIAgentProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<Message[]>([
         {
@@ -206,7 +211,7 @@ export default function AIAgent() {
             {/* Floating Button */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className={`group relative max-lg:mb-20 flex items-center justify-center w-12 h-12 lg:w-14 lg:h-14 rounded-full shadow-lg transition-all duration-300 hover:scale-110 ${
+                className={`group relative ${className} flex items-center justify-center w-12 h-12 lg:w-14 lg:h-14 rounded-full shadow-lg transition-all duration-300 hover:scale-110 ${
                     isOpen
                         ? 'bg-slate-700 text-slate-300 rotate-90'
                         : 'bg-gradient-to-br from-slate-500 via-blue-500 to-blue-500 text-white animate-bounce-slow'

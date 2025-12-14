@@ -100,8 +100,8 @@ const PostForm: React.FC<{
             <button
               key={t} type="button" onClick={() => updateField('type', t)}
               className={`flex-1 py-3 rounded-xl border text-sm font-medium transition-all duration-200 ${formData.type === t
-                ? t === 'lomba' ? 'bg-blue-600/20 border-blue-500 text-blue-300' 
-                : 'bg-yellow-500/20 border-yellow-500 text-yellow-300'
+                ? t === 'lomba' ? 'bg-blue-600/20 border-blue-500 text-blue-300'
+                  : 'bg-yellow-500/20 border-yellow-500 text-yellow-300'
                 : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'}`}
             >
               {t.charAt(0).toUpperCase() + t.slice(1)}
@@ -178,7 +178,7 @@ const PostForm: React.FC<{
                     placeholder="Contoh: Lomba Desain web"
                     required
                   />
-                   <InputField
+                  <InputField
                     id={`detail-desc-${index}`}
                     label="Deskripsi"
                     type="textarea"
@@ -191,7 +191,7 @@ const PostForm: React.FC<{
                     placeholder="Deskripsi singkat..."
                     required
                   />
-                  </div>
+                </div>
               </div>
             ))}
             <button
@@ -363,19 +363,19 @@ const CommentSlidePanel: React.FC<{
   );
 
   const { showConfirm, showAlert } = useAlert();
-  
+
   const handleSendReply = (parentId: string) => {
-      //... existing logic but with showAlert if error?
-      if (!parentId || !replyText.trim()) return;
-      onReply(replyText.trim(), parentId);
-      setReplyText('');
-      setReplyingTo(null);
+    //... existing logic but with showAlert if error?
+    if (!parentId || !replyText.trim()) return;
+    onReply(replyText.trim(), parentId);
+    setReplyText('');
+    setReplyingTo(null);
   }
 
   const handleDeleteClick = async (commentId: string) => {
     if (commentId) {
       if (await showConfirm("Hapus komentar ini?", 'Hapus Komentar', 'Ya, Hapus')) {
-         onDeleteComment(commentId);
+        onDeleteComment(commentId);
       }
     }
   };
@@ -539,7 +539,7 @@ const ParticipantListModal: React.FC<{
             <X size={20} />
           </button>
         </div>
-        
+
         <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
           {loading ? (
             <div className="flex justify-center py-12">
@@ -580,7 +580,7 @@ const ParticipantListModal: React.FC<{
             </div>
           )}
         </div>
-        
+
         <div className="p-4 border-t border-white/10 bg-slate-900/50 backdrop-blur-md flex justify-between items-center">
           <span className="text-sm text-slate-400">Total Peserta: <strong className="text-white">{participants.length}</strong></span>
           <button className="px-4 py-2 bg-blue-600/20 text-blue-400 text-sm font-bold rounded-lg border border-blue-500/20 hover:bg-blue-600/30 transition-colors">
@@ -915,6 +915,7 @@ const AdminPost: React.FC = () => {
         type: data.type,
         tags: data.tags || [],
         category: data.type,
+        details: data.details || [],
       });
     } catch (error) {
       console.error('Error update:', error);
@@ -924,7 +925,7 @@ const AdminPost: React.FC = () => {
 
   const handleDeletePost = async (id: string) => {
     const confirmed = await showConfirm(
-      'Apakah Anda yakin ingin menghapus postingan ini? Tindakan ini tidak dapat dibatalkan.', 
+      'Apakah Anda yakin ingin menghapus postingan ini? Tindakan ini tidak dapat dibatalkan.',
       'Hapus Permanen',
       'Hapus'
     );

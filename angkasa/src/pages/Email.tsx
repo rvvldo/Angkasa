@@ -19,6 +19,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
+import AIAgent from "../components/AIAgent";
 
 // Interface untuk Email dari Firestore
 interface EmailMessage {
@@ -359,6 +360,7 @@ export default function Email() {
           </div>
         </div>
       </main>
+      <AIAgent />
     </div>
   );
 }

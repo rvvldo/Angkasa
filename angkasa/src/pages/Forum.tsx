@@ -10,6 +10,7 @@ import ChatView from '../components/forum/ChatView';
 import EventView from '../components/forum/EventView';
 import { Play } from 'lucide-react';
 import Particles from '../components/Particles';
+import AIAgent from '../components/AIAgent';
 
 export default function ForumPage() {
   const { user, isAudioPlaying, togglePlay } = useAuth();
@@ -107,6 +108,7 @@ export default function ForumPage() {
           </div>
         </div>
       </main>
+      <AIAgent className='max-lg:mb-20' />
     </div>
   );
 }

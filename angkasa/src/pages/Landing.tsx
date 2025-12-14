@@ -8,6 +8,7 @@ import { useAuth } from '../components/AuthProvider';
 import CountUpStat from '../components/CountUpStat';
 import { Play, ArrowRight, Star, Award, Users, Zap } from 'lucide-react';
 import { useRef } from 'react';
+import AIAgent from '../components/AIAgent';
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -393,8 +394,8 @@ export default function Landing() {
           </div>
         </div>
       </section>
-
       <LandingFooter />
+      <AIAgent className='max-lg:mb-18 max-lg:mr-4' />
     </div>
   );
 }
