@@ -176,20 +176,20 @@ export default function Email() {
         </button>
       </div>
 
-      <main className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl pt-24 md:pt-28 pb-12">
-        <div className="mb-6 md:mb-8 text-center">
-          <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">Kotak Masuk</h1>
-          <p className="text-slate-400 text-sm md:text-base">Kelola pesan dan notifikasi sertifikat Anda.</p>
+      <main className="relative z-10 container mx-auto px-3 sm:px-6 lg:px-8 max-w-7xl pt-20 sm:pt-24 md:pt-28 pb-12 mb-20 sm:mb-0">
+        <div className="mb-4 sm:mb-6 md:mb-8 text-center">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-1 sm:mb-2">Kotak Masuk</h1>
+          <p className="text-slate-400 text-xs sm:text-sm md:text-base">Kelola pesan dan notifikasi sertifikat Anda.</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8">
           {/* Sidebar */}
           <div className="lg:col-span-3">
-            <div className="bg-slate-800/40 backdrop-blur-xl rounded-2xl border border-slate-700/50 overflow-hidden static lg:sticky lg:top-24 shadow-xl">
-              <div className="p-3 md:p-4 border-b border-slate-700/50 bg-slate-900/20">
-                <h2 className="font-semibold text-slate-200 text-xs md:text-sm uppercase tracking-wider">Navigasi</h2>
+            <div className="bg-slate-800/40 backdrop-blur-xl rounded-xl sm:rounded-2xl border border-slate-700/50 overflow-hidden static lg:sticky lg:top-24 shadow-xl">
+              <div className="p-2.5 sm:p-3 md:p-4 border-b border-slate-700/50 bg-slate-900/20">
+                <h2 className="font-semibold text-slate-200 text-[10px] sm:text-xs md:text-sm uppercase tracking-wider">Navigasi</h2>
               </div>
-              <nav className="p-2 space-y-1">
+              <nav className="p-1.5 sm:p-2 space-y-1 flex lg:flex-col overflow-x-auto lg:overflow-x-visible">
                 {[
                   { id: "inbox", label: "Kotak Masuk", icon: Inbox, count: emails.length },
                   { id: "starred", label: "Penting", icon: Star, count: emails.filter(e => e.starred).length },
@@ -201,15 +201,15 @@ export default function Email() {
                     <button
                       key={item.id}
                       onClick={() => setActiveTab(item.id as any)}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all duration-200 group ${isActive
+                      className={`flex-shrink-0 lg:w-full flex items-center gap-2 sm:gap-3 px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-left transition-all duration-200 group ${isActive
                         ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
                         : "text-slate-400 hover:bg-slate-700/50 hover:text-white"
                         }`}
                     >
                       <Icon className={`w-4 h-4 md:w-5 md:h-5 ${isActive ? 'text-white' : 'group-hover:text-white'}`} />
-                      <span className="font-medium text-sm md:text-base">{item.label}</span>
+                      <span className="font-medium text-xs sm:text-sm md:text-base whitespace-nowrap">{item.label}</span>
                       {item.count > 0 && (
-                        <span className={`ml-auto text-xs px-2 py-0.5 rounded-full ${isActive ? 'bg-white/20 text-white' : 'bg-slate-700 text-slate-300'
+                        <span className={`ml-auto text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full ${isActive ? 'bg-white/20 text-white' : 'bg-slate-700 text-slate-300'
                           }`}>
                           {item.count}
                         </span>
@@ -223,29 +223,29 @@ export default function Email() {
 
           {/* Konten */}
           <div className="lg:col-span-9">
-            <div className="bg-slate-800/40 backdrop-blur-xl rounded-2xl border border-slate-700/50 shadow-xl overflow-hidden min-h-[500px] md:min-h-[600px]">
+            <div className="bg-slate-800/40 backdrop-blur-xl rounded-xl sm:rounded-2xl border border-slate-700/50 shadow-xl overflow-hidden min-h-[400px] sm:min-h-[500px] md:min-h-[600px]">
               {/* Search Header */}
-              <div className="p-3 md:p-4 border-b border-slate-700/50 flex items-center justify-between gap-3 md:gap-4 bg-slate-900/20">
+              <div className="p-2.5 sm:p-3 md:p-4 border-b border-slate-700/50 flex items-center justify-between gap-2 sm:gap-3 md:gap-4 bg-slate-900/20">
                 {activeTab !== "accepted" ? (
                   <div className="relative flex-1 max-w-md">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Search className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400" />
                     <input
                       type="text"
                       placeholder="Cari pesan..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 bg-slate-900/50 border border-slate-700/50 rounded-xl text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500/50 transition-all focus:bg-slate-900/80"
+                      className="w-full pl-8 sm:pl-10 pr-3 sm:pr-4 py-1.5 sm:py-2 bg-slate-900/50 border border-slate-700/50 rounded-lg sm:rounded-xl text-xs sm:text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500/50 transition-all focus:bg-slate-900/80"
                     />
                   </div>
                 ) : (
-                  <h3 className="font-semibold text-slate-200 text-sm md:text-base">Sertifikat Tersimpan</h3>
+                  <h3 className="font-semibold text-slate-200 text-xs sm:text-sm md:text-base">Sertifikat Tersimpan</h3>
                 )}
               </div>
 
-              <div className="p-1 md:p-2">
+              <div className="p-1 sm:p-1.5 md:p-2">
                 {loading ? (
-                  <div className="flex items-center justify-center h-48 md:h-64">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                  <div className="flex items-center justify-center h-40 sm:h-48 md:h-64">
+                    <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-blue-500"></div>
                   </div>
                 ) : (
                   <AnimatePresence mode="wait">
@@ -255,43 +255,43 @@ export default function Email() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="space-y-2 md:space-y-3 p-1 md:p-2"
+                        className="space-y-1.5 sm:space-y-2 md:space-y-3 p-1 sm:p-1.5 md:p-2"
                       >
                         {acceptedCertificates.length === 0 ? (
-                          <div className="flex flex-col items-center justify-center py-20 text-center">
-                            <div className="w-16 h-16 bg-slate-800/50 rounded-full flex items-center justify-center mb-4">
-                              <CheckCircle className="w-8 h-8 text-slate-600" />
+                          <div className="flex flex-col items-center justify-center py-12 sm:py-16 md:py-20 text-center px-4">
+                            <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-slate-800/50 rounded-full flex items-center justify-center mb-3 sm:mb-4">
+                              <CheckCircle className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-slate-600" />
                             </div>
-                            <h3 className="text-slate-300 font-medium mb-1">Belum ada sertifikat</h3>
-                            <p className="text-slate-500 text-sm max-w-xs">Sertifikat yang Anda terima akan muncul di sini.</p>
+                            <h3 className="text-slate-300 font-medium mb-1 text-sm sm:text-base">Belum ada sertifikat</h3>
+                            <p className="text-slate-500 text-xs sm:text-sm max-w-xs">Sertifikat yang Anda terima akan muncul di sini.</p>
                           </div>
                         ) : (
                           acceptedCertificates.map((cert) => (
                             <div
                               key={cert.id}
                               onClick={() => navigate(`/email/accepted/${cert.id}`)}
-                              className="group relative bg-slate-800/30 hover:bg-slate-700/40 rounded-xl border border-slate-700/30 p-3 md:p-4 cursor-pointer transition-all hover:border-blue-500/30 hover:shadow-lg hover:shadow-blue-500/5"
+                              className="group relative bg-slate-800/30 hover:bg-slate-700/40 rounded-lg sm:rounded-xl border border-slate-700/30 p-2.5 sm:p-3 md:p-4 cursor-pointer transition-all hover:border-blue-500/30 hover:shadow-lg hover:shadow-blue-500/5"
                             >
-                              <div className="flex items-start gap-3 md:gap-4">
-                                <div className={`p-2 md:p-3 rounded-xl flex-shrink-0 ${cert.icon === 'trophy' ? 'bg-amber-500/10 text-amber-500' :
+                              <div className="flex items-start gap-2.5 sm:gap-3 md:gap-4">
+                                <div className={`p-1.5 sm:p-2 md:p-3 rounded-lg sm:rounded-xl flex-shrink-0 ${cert.icon === 'trophy' ? 'bg-amber-500/10 text-amber-500' :
                                   cert.icon === 'medal' ? 'bg-blue-500/10 text-blue-500' :
                                     'bg-purple-500/10 text-purple-500'
                                   }`}>
-                                  {cert.icon === "trophy" ? <Trophy className="w-5 h-5 md:w-6 md:h-6" /> :
-                                    cert.icon === "medal" ? <Medal className="w-5 h-5 md:w-6 md:h-6" /> :
-                                      <Star className="w-5 h-5 md:w-6 md:h-6" />}
+                                  {cert.icon === "trophy" ? <Trophy className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" /> :
+                                    cert.icon === "medal" ? <Medal className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" /> :
+                                      <Star className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <span className="px-2 py-0.5 bg-green-500/10 text-green-400 text-[10px] font-bold uppercase tracking-wider rounded-md border border-green-500/20 flex-shrink-0">
+                                  <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1 flex-wrap">
+                                    <span className="px-1.5 sm:px-2 py-0.5 bg-green-500/10 text-green-400 text-[8px] sm:text-[10px] font-bold uppercase tracking-wider rounded-md border border-green-500/20 flex-shrink-0">
                                       Terverifikasi
                                     </span>
-                                    <span className="text-[10px] md:text-xs text-slate-500 truncate">• {cert.date}</span>
+                                    <span className="text-[8px] sm:text-[10px] md:text-xs text-slate-500 truncate">• {cert.date}</span>
                                   </div>
-                                  <h3 className="font-bold text-sm md:text-base text-slate-100 group-hover:text-white transition-colors truncate">{cert.title}</h3>
-                                  <p className="text-slate-400 text-xs md:text-sm mt-0.5 truncate">{cert.issuer}</p>
+                                  <h3 className="font-bold text-xs sm:text-sm md:text-base text-slate-100 group-hover:text-white transition-colors truncate">{cert.title}</h3>
+                                  <p className="text-slate-400 text-[10px] sm:text-xs md:text-sm mt-0.5 truncate">{cert.issuer}</p>
                                 </div>
-                                <ChevronRight className="w-4 h-4 md:w-5 md:h-5 text-slate-600 group-hover:text-blue-400 transition-colors flex-shrink-0 mt-2" />
+                                <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 text-slate-600 group-hover:text-blue-400 transition-colors flex-shrink-0 mt-1.5 sm:mt-2" />
                               </div>
                             </div>
                           ))
@@ -303,15 +303,15 @@ export default function Email() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="space-y-1"
+                        className="space-y-0.5 sm:space-y-1"
                       >
                         {filteredEmails.length === 0 ? (
-                          <div className="flex flex-col items-center justify-center py-20 text-center">
-                            <div className="w-16 h-16 bg-slate-800/50 rounded-full flex items-center justify-center mb-4">
-                              <Inbox className="w-8 h-8 text-slate-600" />
+                          <div className="flex flex-col items-center justify-center py-12 sm:py-16 md:py-20 text-center px-4">
+                            <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-slate-800/50 rounded-full flex items-center justify-center mb-3 sm:mb-4">
+                              <Inbox className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-slate-600" />
                             </div>
-                            <h3 className="text-slate-300 font-medium mb-1">Kotak masuk kosong</h3>
-                            <p className="text-slate-500 text-sm max-w-xs">Tidak ada pesan yang ditemukan.</p>
+                            <h3 className="text-slate-300 font-medium mb-1 text-sm sm:text-base">Kotak masuk kosong</h3>
+                            <p className="text-slate-500 text-xs sm:text-sm max-w-xs">Tidak ada pesan yang ditemukan.</p>
                           </div>
                         ) : (
                           <div className="divide-y divide-slate-800/50">
@@ -319,32 +319,32 @@ export default function Email() {
                               <div
                                 key={email.id}
                                 onClick={() => navigate(`/email/${email.id}`)}
-                                className={`group p-3 md:p-4 hover:bg-slate-700/30 transition-all cursor-pointer rounded-lg mx-1 md:mx-2 my-1 ${!email.read ? "bg-slate-800/60" : ""
+                                className={`group p-2.5 sm:p-3 md:p-4 hover:bg-slate-700/30 transition-all cursor-pointer rounded-lg mx-0.5 sm:mx-1 md:mx-2 my-0.5 sm:my-1 ${!email.read ? "bg-slate-800/60" : ""
                                   }`}
                               >
-                                <div className="flex items-start gap-3 md:gap-4">
-                                  <div className={`mt-1.5 w-2 h-2 rounded-full flex-shrink-0 ${!email.read ? 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]' : 'bg-transparent'}`} />
+                                <div className="flex items-start gap-2 sm:gap-3 md:gap-4">
+                                  <div className={`mt-1 sm:mt-1.5 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full flex-shrink-0 ${!email.read ? 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]' : 'bg-transparent'}`} />
 
                                   <div className="flex-1 min-w-0">
-                                    <div className="flex items-center justify-between gap-2 md:gap-4 mb-1">
-                                      <h4 className={`text-xs md:text-sm truncate ${!email.read ? 'font-bold text-white' : 'font-medium text-slate-300'}`}>
+                                    <div className="flex items-center justify-between gap-1.5 sm:gap-2 md:gap-4 mb-0.5 sm:mb-1">
+                                      <h4 className={`text-[11px] sm:text-xs md:text-sm truncate ${!email.read ? 'font-bold text-white' : 'font-medium text-slate-300'}`}>
                                         {email.senderName}
                                       </h4>
-                                      <span className={`text-[10px] md:text-xs whitespace-nowrap flex-shrink-0 ${!email.read ? 'text-blue-400 font-medium' : 'text-slate-500'}`}>
+                                      <span className={`text-[9px] sm:text-[10px] md:text-xs whitespace-nowrap flex-shrink-0 ${!email.read ? 'text-blue-400 font-medium' : 'text-slate-500'}`}>
                                         {formatTime(email.time)}
                                       </span>
                                     </div>
-                                    <h3 className={`text-sm md:text-base truncate mb-1 ${!email.read ? 'font-bold text-slate-100' : 'text-slate-300'}`}>
+                                    <h3 className={`text-xs sm:text-sm md:text-base truncate mb-0.5 sm:mb-1 ${!email.read ? 'font-bold text-slate-100' : 'text-slate-300'}`}>
                                       {email.subject}
                                     </h3>
-                                    <p className="text-slate-400 text-xs md:text-sm line-clamp-1">
+                                    <p className="text-slate-400 text-[10px] sm:text-xs md:text-sm line-clamp-1">
                                       {email.preview}
                                     </p>
                                   </div>
 
-                                  <div className="flex flex-col items-end gap-2 text-slate-500 flex-shrink-0">
-                                    {email.starred && <Star className="w-3 h-3 md:w-4 md:h-4 text-amber-400 fill-amber-400" />}
-                                    {email.attachments && email.attachments > 0 ? <Paperclip className="w-3 h-3 md:w-4 md:h-4" /> : null}
+                                  <div className="flex flex-col items-end gap-1.5 sm:gap-2 text-slate-500 flex-shrink-0">
+                                    {email.starred && <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 text-amber-400 fill-amber-400" />}
+                                    {email.attachments && email.attachments > 0 ? <Paperclip className="w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4" /> : null}
                                   </div>
                                 </div>
                               </div>

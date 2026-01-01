@@ -4,7 +4,6 @@ import { useAuth } from '../components/AuthProvider';
 import { useNavigate, useLocation } from 'react-router-dom'; // ✅ tambahkan useLocation
 import Particles from '../components/Particles';
 import { Link } from 'react-router-dom';
-import AIAgent from '../components/AIAgent';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -97,23 +96,23 @@ export default function LoginPage() {
         />
       </div>
 
-      <div className="relative z-10 flex items-center justify-center min-h-screen p-4">
-        <div className="w-full max-w-md bg-white/80 backdrop-blur-sm rounded-xl shadow-xl overflow-hidden p-8 border border-white/20">
-          <div className="text-center mb-6">
-            <h2 className="text-3xl font-bold text-gray-800">Login</h2>
-            <p className="text-gray-600 mt-2">Masuk ke akun Anda</p>
+      <div className="relative z-10 flex items-center justify-center min-h-screen p-3 sm:p-4">
+        <div className="w-full max-w-md bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-xl shadow-xl overflow-hidden p-5 sm:p-6 md:p-8 border border-white/20">
+          <div className="text-center mb-4 sm:mb-6">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">Login</h2>
+            <p className="text-gray-600 mt-1.5 sm:mt-2 text-sm sm:text-base">Masuk ke akun Anda</p>
           </div>
 
           {/* ✅ Tampilkan pesan (sukses/error) */}
           {error && (
-            <div className="mb-4 p-3 rounded-md text-sm text-red-700 bg-red-50 border border-red-200">
+            <div className="mb-3 sm:mb-4 p-2.5 sm:p-3 rounded-md text-xs sm:text-sm text-red-700 bg-red-50 border border-red-200">
               {error}
             </div>
           )}
 
           {/* ✅ Info: email belum diverifikasi */}
           {!isEmailVerified && user?.email && (
-            <div className="mb-4 p-3 rounded-md text-sm text-amber-700 bg-amber-50 border border-amber-200">
+            <div className="mb-3 sm:mb-4 p-2.5 sm:p-3 rounded-md text-xs sm:text-sm text-amber-700 bg-amber-50 border border-amber-200">
               Email belum diverifikasi.{' '}
               <button
                 onClick={handleSendVerification}
@@ -124,9 +123,9 @@ export default function LoginPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="email" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                 Email
               </label>
               <input
@@ -134,13 +133,13 @@ export default function LoginPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2 bg-white/70 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-white/70 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm sm:text-base"
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="password" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                 Password
               </label>
               <input
@@ -148,7 +147,7 @@ export default function LoginPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2 bg-white/70 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-white/70 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm sm:text-base"
                 required
               />
             </div>
@@ -156,7 +155,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className={`w-full py-2 px-4 rounded-md font-medium text-white ${
+              className={`w-full py-2 sm:py-2.5 px-4 rounded-md font-medium text-white text-sm sm:text-base ${
                 loading ? 'bg-slate-400 cursor-not-allowed' : 'bg-slate-600 hover:bg-slate-700'
               } transition duration-200`}
             >
@@ -164,22 +163,22 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="my-6 flex items-center">
+          <div className="my-4 sm:my-6 flex items-center">
             <div className="flex-grow border-t border-gray-300"></div>
-            <span className="mx-4 text-gray-500 text-sm">atau</span>
+            <span className="mx-3 sm:mx-4 text-gray-500 text-xs sm:text-sm">atau</span>
             <div className="flex-grow border-t border-gray-300"></div>
           </div>
 
           <button
             onClick={handleGoogleLogin}
             disabled={loading}
-            className={`w-full py-2 px-4 rounded-md font-medium flex items-center justify-center gap-2 ${
+            className={`w-full py-2 sm:py-2.5 px-4 rounded-md font-medium flex items-center justify-center gap-2 text-sm sm:text-base ${
               loading
                 ? 'bg-gray-300 cursor-not-allowed'
                 : 'bg-red-500 hover:bg-red-600 text-white'
             } transition`}
           >
-            <svg viewBox="0 0 24 24" className="w-5 h-5">
+            <svg viewBox="0 0 24 24" className="w-4 h-4 sm:w-5 sm:h-5">
               <path
                 fill="#fff"
                 d="M12.24 10.285V14.4h6.806c-.275 1.765-2.056 5.174-6.806 5.174-4.095 0-7.439-3.389-7.439-7.574s3.345-7.574 7.439-7.574c2.33 0 3.891.989 4.785 1.849l3.254-3.138C18.189 1.186 15.479 0 12.24 0c-6.635 0-12 5.365-12 12s5.365 12 12 12c6.926 0 11.52-4.869 11.52-11.726 0-.788-.085-1.39-.189-1.989H12.24z"
@@ -188,7 +187,7 @@ export default function LoginPage() {
             Login dengan Google
           </button>
 
-          <div className="mt-6 text-center text-sm text-gray-500">
+          <div className="mt-4 sm:mt-6 text-center text-xs sm:text-sm text-gray-500">
             Belum punya akun?{' '}
             <Link to="/daftar" className="text-slate-600 hover:underline font-medium">
               Daftar
@@ -196,7 +195,6 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
-      <AIAgent />
     </div>
   );
 }

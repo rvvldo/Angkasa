@@ -15,7 +15,6 @@ import {
 import { auth, db } from '../firebase';
 import { Link } from 'react-router-dom';
 import Particles from '../components/Particles';
-import AIAgent from '../components/AIAgent';
 
 export default function RegisterPage() {
   const [name, setName] = useState('');
@@ -165,22 +164,22 @@ export default function RegisterPage() {
         />
       </div>
 
-      <div className="relative z-10 flex items-center justify-center min-h-screen p-4">
-        <div className="w-full max-w-md bg-white/80 backdrop-blur-sm rounded-xl shadow-xl overflow-hidden p-8 border border-white/20">
-          <div className="text-center mb-6">
-            <h2 className="text-3xl font-bold text-gray-800">Daftar</h2>
-            <p className="text-gray-600 mt-2">Buat akun baru untuk bergabung</p>
+      <div className="relative z-10 flex items-center justify-center min-h-screen p-3 sm:p-4">
+        <div className="w-full max-w-md bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-xl shadow-xl overflow-hidden p-5 sm:p-6 md:p-8 border border-white/20">
+          <div className="text-center mb-4 sm:mb-6">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">Daftar</h2>
+            <p className="text-gray-600 mt-1.5 sm:mt-2 text-sm sm:text-base">Buat akun baru untuk bergabung</p>
           </div>
 
           {error && (
-            <div className="mb-4 p-3 rounded-md text-sm text-red-700 bg-red-50 border border-red-200">
+            <div className="mb-3 sm:mb-4 p-2.5 sm:p-3 rounded-md text-xs sm:text-sm text-red-700 bg-red-50 border border-red-200">
               {error}
             </div>
           )}
 
-          <form onSubmit={handleRegister} className="space-y-4">
+          <form onSubmit={handleRegister} className="space-y-3 sm:space-y-4">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="name" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                 Nama Lengkap
               </label>
               <input
@@ -188,14 +187,14 @@ export default function RegisterPage() {
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-4 py-2 bg-white/70 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-white/70 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm sm:text-base"
                 required
                 autoFocus // ✅ fokus otomatis
               />
             </div>
 
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="username" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                 Nama Panggilan (username)
               </label>
               <input
@@ -204,16 +203,16 @@ export default function RegisterPage() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="contoh: budi_aja"
-                className="w-full px-4 py-2 bg-white/70 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-white/70 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm sm:text-base"
                 required
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-[10px] sm:text-xs text-gray-500">
                 Hanya huruf, angka, dan _ (3–20 karakter)
               </p>
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="email" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                 Email
               </label>
               <input
@@ -221,13 +220,13 @@ export default function RegisterPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2 bg-white/70 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-white/70 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm sm:text-base"
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="password" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                 Password
               </label>
               <input
@@ -235,13 +234,13 @@ export default function RegisterPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2 bg-white/70 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-white/70 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm sm:text-base"
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="confirmPassword" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                 Konfirmasi Password
               </label>
               <input
@@ -249,7 +248,7 @@ export default function RegisterPage() {
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-4 py-2 bg-white/70 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-white/70 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm sm:text-base"
                 required
               />
             </div>
@@ -257,7 +256,7 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={loading}
-              className={`w-full py-2 px-4 rounded-md font-medium text-white ${
+              className={`w-full py-2 sm:py-2.5 px-4 rounded-md font-medium text-white text-sm sm:text-base ${
                 loading ? 'bg-slate-400 cursor-not-allowed' : 'bg-slate-600 hover:bg-slate-700'
               } transition duration-200`}
             >
@@ -265,7 +264,7 @@ export default function RegisterPage() {
             </button>
           </form>
 
-          <div className="mt-6 text-center text-sm text-gray-500">
+          <div className="mt-4 sm:mt-6 text-center text-xs sm:text-sm text-gray-500">
             Sudah punya akun?{' '}
             <Link to="/login" className="text-slate-600 hover:underline font-medium">
               Login
@@ -273,7 +272,6 @@ export default function RegisterPage() {
           </div>
         </div>
       </div>
-      <AIAgent />
     </div>
   );
 }

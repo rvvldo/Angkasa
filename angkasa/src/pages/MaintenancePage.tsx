@@ -1,7 +1,6 @@
 import React from 'react';
 import RubiksCube from '../components/RubiksCube';
 import Particles from '../components/Particles';
-import AIAgent from '../components/AIAgent';
 
 const MaintenancePage: React.FC = () => {
     return (
@@ -61,7 +60,6 @@ const MaintenancePage: React.FC = () => {
           animation: gradient-x 15s ease infinite;
         }
       `}</style>
-      <AIAgent />
         </div>
     );
 };

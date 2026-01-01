@@ -67,40 +67,40 @@ export default function ForumPage() {
       <DashboardHeader />
 
       {/* Music Control - Floating */}
-      <div className="fixed bottom-26 sm:bottom-6 left-4 z-50">
+      <div className="fixed bottom-28 sm:bottom-6 left-3 sm:left-4 z-50">
         <button
           onClick={togglePlay}
           className="group flex items-center gap-0 sm:gap-3 p-0 sm:pr-5 sm:pl-3 sm:py-3 transition-all duration-300"
           title={isAudioPlaying ? 'Jeda musik' : 'Putar musik'}
         >
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-slate-600 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-blue-500 to-slate-600 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
             {isAudioPlaying ? (
-              <div className="flex gap-1 items-end h-4">
-                <span className="w-1 bg-white h-2 animate-music-bar-1"></span>
-                <span className="w-1 bg-white h-4 animate-music-bar-2"></span>
-                <span className="w-1 bg-white h-3 animate-music-bar-3"></span>
+              <div className="flex gap-0.5 sm:gap-1 items-end h-3.5 sm:h-4">
+                <span className="w-0.5 sm:w-1 bg-white h-1.5 sm:h-2 animate-music-bar-1"></span>
+                <span className="w-0.5 sm:w-1 bg-white h-3 sm:h-4 animate-music-bar-2"></span>
+                <span className="w-0.5 sm:w-1 bg-white h-2 sm:h-3 animate-music-bar-3"></span>
               </div>
             ) : (
-              <Play className="w-4 h-4 text-white ml-0.5" fill="currentColor" />
+              <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white ml-0.5" fill="currentColor" />
             )}
           </div>
         </button>
       </div>
 
-      <main className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 max-w-[1600px] pt-28 pb-12">
-        <div className="flex flex-col lg:flex-row gap-8">
+      <main className="relative z-10 container mx-auto px-3 sm:px-6 lg:px-8 max-w-[1600px] pt-20 sm:pt-24 md:pt-28 pb-12 mb-24 sm:mb-0">
+        <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8">
           {/* Left Sidebar */}
           <ForumSidebar activeView={activeView} setActiveView={setActiveView} />
 
           {/* Main Content */}
-          <div className="flex-1 min-w-0 lg:min-w-[720px]  order-2 lg:order-2">
+          <div className="flex-1 min-w-0 lg:min-w-[720px] order-2 lg:order-2">
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
               {renderContent()}
             </div>
           </div>
 
           {/* Right Sidebar */}
-          <div className="flex flex-col gap-6 w-70 order-3 lg:order-3">
+          <div className="flex flex-col gap-4 sm:gap-6 w-full lg:w-70 order-3 lg:order-3">
             <ForumRightSidebar
               onSearch={handlePopularSearchClick}
               onSearchClick={() => setTriggerSearchOpen(true)}
@@ -108,7 +108,7 @@ export default function ForumPage() {
           </div>
         </div>
       </main>
-      <AIAgent className='max-lg:mb-20' />
+      <AIAgent className='max-lg:mb-24' />
     </div>
   );
 }
