@@ -25,10 +25,16 @@ export const authService = {
 
   loginWithGoogle: () => {
     const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({
+      prompt: 'select_account'
+    });
+    
     // Gunakan redirect untuk mobile, popup untuk desktop
     if (isMobile()) {
+      console.log('Using signInWithRedirect for mobile');
       return signInWithRedirect(auth, provider);
     } else {
+      console.log('Using signInWithPopup for desktop');
       return signInWithPopup(auth, provider);
     }
   },
@@ -75,21 +81,6 @@ export const authService = {
     if (updates.name) {
       await updateFirebaseProfile(auth.currentUser, { displayName: updates.name });
     }
-
-    const testSave = async () => {
-  try {
-    await setDoc(doc(db, 'users', 'test123'), {
-      name: 'Test User',
-      email: 'test@example.com',
-      bio: 'Ini user uji coba'
-    });
-    console.log('Data berhasil disimpan!');
-  } catch (err) {
-    console.error('Gagal simpan:', err);
-  }
-};
-
-testSave();
 
     // Update di Firestore
     await setDoc(doc(db, 'users', uid), updates, { merge: true });

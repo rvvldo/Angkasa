@@ -15,6 +15,15 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
+// Debug: Log config (hanya untuk development)
+if (import.meta.env.DEV) {
+  console.log('Firebase Config:', {
+    apiKey: firebaseConfig.apiKey ? '✓ Set' : '✗ Missing',
+    authDomain: firebaseConfig.authDomain || '✗ Missing',
+    projectId: firebaseConfig.projectId || '✗ Missing',
+  });
+}
+
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);

@@ -77,14 +77,27 @@ export default function LoginPage() {
       // Loading state akan tetap aktif sampai user kembali dari Google
     } catch (err: any) {
       console.error('Google login error:', err);
+      console.error('Error code:', err.code);
+      console.error('Error message:', err.message);
+      
       let message = 'Gagal login dengan Google. Coba lagi.';
+      
       if (err.code === 'auth/popup-blocked') {
         message = 'Popup diblokir. Izinkan popup untuk login dengan Google.';
       } else if (err.code === 'auth/popup-closed-by-user') {
         message = 'Login dibatalkan.';
       } else if (err.code === 'auth/cancelled-popup-request') {
         message = 'Permintaan login dibatalkan.';
+      } else if (err.code === 'auth/unauthorized-domain') {
+        message = 'Domain tidak diizinkan. Hubungi administrator.';
+      } else if (err.code === 'auth/operation-not-allowed') {
+        message = 'Login dengan Google tidak diaktifkan. Hubungi administrator.';
+      } else if (err.code === 'auth/invalid-api-key') {
+        message = 'Konfigurasi Firebase tidak valid.';
+      } else if (err.message) {
+        message = `Error: ${err.message}`;
       }
+      
       setError(message);
       setLoading(false);
     }
