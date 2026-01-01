@@ -88,7 +88,7 @@ const Notifications = () => {
   }, []);
 
   // Generate key unik per user untuk localStorage
-  const readStatusKey = user ? `notif_read_status_${user.uid}` : null;
+  const readStatusKey = user ? `notif_read_status_${user.id}` : null;
 
   // Baca status baca dari localStorage
   const getReadStatus = (): Set<string> => {
@@ -123,7 +123,7 @@ const Notifications = () => {
         iconType: type === "lomba" ? "trophy" : "medal",
       } satisfies Notification;
     });
-  }, [firebaseNotifs, user?.uid]);
+  }, [firebaseNotifs, user?.id]);
 
   // Filter & Cari
   const filteredNotifications = notifications.filter((notif) => {
@@ -136,7 +136,7 @@ const Notifications = () => {
     const matchesSearch =
       notif.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       notif.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (notif.badge && notif.badge.toLowerCase().includes(searchQuery.toLowerCase()));
+      (notif.badge && String(notif.badge).toLowerCase().includes(searchQuery.toLowerCase()));
 
     return matchesTab && matchesSearch;
   });

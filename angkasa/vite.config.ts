@@ -13,5 +13,18 @@ export default defineConfig({
   },
   server: {
     allowedHosts: true,
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/database'],
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'three-vendor': ['three', '@react-three/fiber', '@react-three/drei'],
+          'ui-vendor': ['framer-motion', 'lucide-react', 'emoji-picker-react'],
+        }
+      }
+    },
+    chunkSizeWarningLimit: 1000,
   }
 })

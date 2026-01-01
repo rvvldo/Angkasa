@@ -33,6 +33,7 @@ interface GroupMessage {
   sender_name: string;
   content: string;
   timestamp: any;
+  isImage?: boolean;
 }
 
 export default function GroupView() {

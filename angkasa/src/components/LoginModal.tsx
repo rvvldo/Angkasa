@@ -19,7 +19,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     setLoading(true);
 
     try {
-      await login({ email, password });
+      await login(email, password);
       onClose();
     } catch (err: any) {
       setError(err.message || 'Login gagal');
