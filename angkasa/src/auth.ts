@@ -5,11 +5,18 @@ import {
   signOut,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithRedirect,
   updateProfile as updateFirebaseProfile,
   sendEmailVerification
 } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { auth, db } from './firebase'; // 👈 pastikan `db` ada
+
+// Helper function to detect mobile
+const isMobile = () => {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+    window.innerWidth < 768;
+};
 
 export const authService = {
   login: (email: string, password: string) => {
@@ -18,7 +25,12 @@ export const authService = {
 
   loginWithGoogle: () => {
     const provider = new GoogleAuthProvider();
-    return signInWithPopup(auth, provider);
+    // Gunakan redirect untuk mobile, popup untuk desktop
+    if (isMobile()) {
+      return signInWithRedirect(auth, provider);
+    } else {
+      return signInWithPopup(auth, provider);
+    }
   },
 
   logout: () => {

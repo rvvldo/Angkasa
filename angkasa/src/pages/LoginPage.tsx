@@ -10,6 +10,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
   const { login, loginWithGoogle, user, isEmailVerified, sendVerificationEmail } = useAuth(); // ✅ tambahkan isEmailVerified & sendVerificationEmail
   const navigate = useNavigate();
   const location = useLocation();
@@ -20,6 +21,22 @@ export default function LoginPage() {
       navigate('/forum');
     }
   }, [user, navigate]);
+
+  // Check if we're returning from a redirect
+  useEffect(() => {
+    const checkRedirect = async () => {
+      setRedirecting(true);
+      // Give time for getRedirectResult to process
+      setTimeout(() => {
+        setRedirecting(false);
+      }, 2000);
+    };
+    
+    // Check if we have redirect params in URL
+    if (window.location.search.includes('apiKey') || window.location.search.includes('oobCode')) {
+      checkRedirect();
+    }
+  }, []);
 
   // ✅ Tampilkan pesan sukses dari register
   useEffect(() => {
@@ -56,9 +73,19 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await loginWithGoogle();
+      // Untuk redirect, tidak perlu menunggu response karena akan redirect ke Google
+      // Loading state akan tetap aktif sampai user kembali dari Google
     } catch (err: any) {
-      setError('Gagal login dengan Google. Coba lagi.');
-    } finally {
+      console.error('Google login error:', err);
+      let message = 'Gagal login dengan Google. Coba lagi.';
+      if (err.code === 'auth/popup-blocked') {
+        message = 'Popup diblokir. Izinkan popup untuk login dengan Google.';
+      } else if (err.code === 'auth/popup-closed-by-user') {
+        message = 'Login dibatalkan.';
+      } else if (err.code === 'auth/cancelled-popup-request') {
+        message = 'Permintaan login dibatalkan.';
+      }
+      setError(message);
       setLoading(false);
     }
   };
@@ -72,10 +99,11 @@ export default function LoginPage() {
     }
   };
 
-  if (loading) {
+  if (loading || redirecting) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        Loading...
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
+        <p className="text-gray-600">{redirecting ? 'Memproses login...' : 'Loading...'}</p>
       </div>
     );
   }

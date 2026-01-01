@@ -1,7 +1,7 @@
 // src/components/AuthProvider.tsx
 import { createContext, useContext, useEffect, useState, useRef, type ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, getRedirectResult } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore'; // ✅ tambahkan ini
 import { auth, db } from '../firebase'; // ✅ pastikan `db` ada
 import { authService } from '../auth';
@@ -105,6 +105,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const togglePlay = () => {
     isAudioPlaying ? pauseAudio() : playAudio();
   };
+
+  // 🔑 Handle redirect result untuk mobile Google login
+  useEffect(() => {
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result) {
+          // User berhasil login via redirect
+          console.log('Login via redirect berhasil:', result.user);
+        }
+      })
+      .catch((error) => {
+        console.error('Error handling redirect:', error);
+        // Tampilkan error jika ada
+        if (error.code === 'auth/account-exists-with-different-credential') {
+          console.error('Akun sudah ada dengan kredensial berbeda');
+        } else if (error.code === 'auth/invalid-credential') {
+          console.error('Kredensial tidak valid');
+        }
+      });
+  }, []);
 
   // 🔑 Sinkronisasi dengan Firebase Auth + Firestore
   useEffect(() => {
